@@ -1,0 +1,16 @@
+__pycache__
+.DS_Store
+.vs_code
+launch.json
+settings.json
+.pylintrc
+
+# abricate indexes
+*.ndb
+*.nhr
+*.nin
+*.not
+*.nsq
+*.ntf
+*.nto
+*.njs

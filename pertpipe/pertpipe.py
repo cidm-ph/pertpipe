@@ -4,21 +4,23 @@ import os
 import sys
 import warnings
 import glob
-import subprocess
 from pertpipe import assists
 from pertpipe import arguments
-from pertpipe import abricate_info
+from pertpipe import prn_info
 from pertpipe import mres_blast
+from pertpipe import mres_copy_no
 
 __version__ = "0.0.1"
-logging.getLogger().setLevel(logging.INFO)
-warnings.simplefilter(action="ignore", category=FutureWarning)
-formatter = logging.Formatter(
-    "pertpipe:%(levelname)s:%(asctime)s: %(message)s", datefmt="%y/%m/%d %I:%M:%S %p"
-)
 
-dependency_list = ["abricate", "spades.py", "mlst"]
+warnings.simplefilter(action="ignore", category=FutureWarning)
+
+dependency_list = ["abricate", "spades.py", "mlst", "minimap2", "samtools", "bcftools"]
 ref_list = []
+
+import logging
+import datetime
+import os
+import sys
 
 def pertpipe():
     """
@@ -37,16 +39,34 @@ def pertpipe():
         outdir = default
     else:
         outdir = args.outdir
+    
+    # force creation of new folder within set outdir
+    maindir = outdir 
+    
+    #newdir = maindir + "/bams"
+    folder_exists = os.path.exists(maindir)
+    if not folder_exists:
+        os.makedirs(maindir)
+        logging.info("Making output folder")
+    else:
+        logging.info(f"Folder exists")
 
     # error log
-    errorlog = os.path.join(outdir + "/pertpipe_" + date + ".log"
-                            )
-    stdout_handler = logging.StreamHandler(sys.stdout)
-    file_handler = logging.FileHandler(errorlog, mode="w+")
-    for handler in [stdout_handler, file_handler]:
-        handler.setLevel(logging.INFO)
-        handler.setFormatter(formatter)
-        logger.addHandler(handler)
+    errorlog = os.path.join(outdir, "pertpipe_" + date + ".log")
+
+    # Ensure no duplicate handlers are added
+    if not logger.hasHandlers():
+        formatter = logging.Formatter(
+            "pertpipe:%(levelname)s:%(asctime)s: %(message)s", datefmt="%y/%m/%d %I:%M:%S %p"
+        )
+        stdout_handler = logging.StreamHandler(sys.stdout)
+        file_handler = logging.FileHandler(errorlog, mode="w+")
+        for handler in [stdout_handler, file_handler]:
+            handler.setLevel(logging.INFO)
+            handler.setFormatter(formatter)
+            logger.addHandler(handler)
+
+    logger.setLevel(logging.INFO)
 
     # cmd checks
     if is_reads is True:
@@ -60,16 +80,6 @@ def pertpipe():
         __version__,
         outdir,
     )
-    # force creation of new folder within set outdir
-    maindir = outdir 
-    
-    #newdir = maindir + "/bams"
-    folder_exists = os.path.exists(maindir)
-    if not folder_exists:
-        os.makedirs(maindir)
-        logging.info("Making output folder")
-    else:
-        logging.info(f"Folder exists")
 
     assists.check_files(args.R1)
     assists.check_files(args.R2)
@@ -90,7 +100,8 @@ def pertpipe():
     else:
         logging.info(f"Spades folder exists")
 
-    if assists.check_spades_finished is False:
+    spades_result = assists.check_spades_finished(spades_outdir)
+    if spades_result is False:
         spades = f"spades.py --careful --only-assembler --pe1-1 {args.R1} --pe1-2 {args.R2} -o {maindir}/spades"
         assists.run_cmd(spades)
     else:
@@ -100,22 +111,14 @@ def pertpipe():
     assembly = spades_outdir + "/contigs.fasta"
     assists.check_files(assembly)
 
-    abricate_outdir = maindir + "/abricate"
-    abricate_outfile = abricate_outdir + "/vfdb.txt"
-    folder_exists = os.path.exists(abricate_outdir)
+    prn_outdir = maindir + "/analysis"
+    folder_exists = os.path.exists(prn_outdir)
     if not folder_exists:
-        os.makedirs(abricate_outdir)
-        logging.info("Making spades output folder")
+        os.makedirs(prn_outdir)
+        logging.info("Making vaccine antigens output folder")
     else:
         logging.info(f"Spades folder exists")
-    if os.path.exists(abricate_outfile) is True and os.stat(abricate_outfile).st_size != 0:
-        logging.info("VFDB results from Abricate already exists. Skipping")
-    else:
-        abricate = f"abricate --datadir {assists.bor_vfdb_db} --db bp-only_vfdb --quiet {assembly} > {abricate_outfile}"
-        assists.run_cmd(abricate)
-        
-    assists.check_files(abricate_outfile)
-    abricate_info.abricate_parse(abricate_outfile)
+    prn_info.prn_analysis(assembly, prn_outdir)
 
     # 23s rRNA for macrolide resistance
     analysis_outdir = maindir + "/analysis"
@@ -125,10 +128,11 @@ def pertpipe():
         logging.info("Making analysis output folder")
     else:
         logging.info(f"analysis folder exists")
-    mres_blast.mres_detection(assembly, analysis_outdir)
+    mutation_list = mres_blast.mres_detection(assembly, analysis_outdir)
+    if mutation_list != []:
+        mres_copy_no.mres_copy_numbers(args.R1, args.R2, analysis_outdir, mutation_list)
 
 
 
 if __name__ == "__main__":
-
     pertpipe()

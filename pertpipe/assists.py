@@ -71,6 +71,17 @@ def check_dependencies(cmd_exec):
         version = result[0].replace("SPAdes genome assembler ", "")
     elif cmd_exec == "mlst":
         version = result[0].replace("mlst ", "v")
+    elif cmd_exec == 'minimap2':
+        version = "v" + result[0]
+    if cmd_exec == "samtools":
+            version = result[0].replace("samtools ", "")
+            if pkg_resources.parse_version(version) < pkg_resources.parse_version(
+                "1.10"
+            ):
+                logging.critical("Samtools version too old, please upgrade to v1.10.0+")
+                sys.exit(1)
+    if cmd_exec == "bcftools":
+        version = result[0].replace("bcftools ", "")
 
     if cmd_path is not None:
         msg = "Located " + cmd_exec + " " + version + " in " + cmd_path
@@ -99,10 +110,16 @@ def check_abricate():
         sys.exit(1)
 
 def check_spades_finished(spades_outdir):
-    result = f"======= SPAdes pipeline finished."
-    spades_log = spades_outdir + "/spades.log"
-    with open(spades_log) as log:
-        if result in log.read():
-            return True
+    result = "======= SPAdes pipeline finished."
+    result2 = "======= SPAdes pipeline finished WITH WARNINGS!"
+    spades_log = os.path.join(spades_outdir, "spades.log")
+    
+    if os.path.isfile(spades_log) and os.stat(spades_log).st_size != 0:
+        with open(spades_log, 'r') as log:
+            for line in log:
+                if result in line or result2 in line:
+                    return True
+        return False
+    else:
         return False
 

@@ -17,9 +17,9 @@ def mres_copy_numbers(reads1, reads2, outdir, mutation_list):
         bcftools_cmd = f"bcftools mpileup -f {rrna_seq} {outdir}/23s_aln.sort.bam | bcftools call -mv -Ov -o {outdir}/mres.vcf"
         assists.run_cmd(bcftools_cmd)
 
-    vcf_calc_and_blast_match(f"{outdir}/mres.vcf", mutation_list)
+    res_dict = vcf_calc_and_blast_match(f"{outdir}/mres.vcf", mutation_list)
 
-    return "blah"
+    return res_dict
 
 def vcf_calc_and_blast_match(bcftools_vcf, mutation_list):
     
@@ -44,10 +44,13 @@ def vcf_calc_and_blast_match(bcftools_vcf, mutation_list):
     mres_df = mres_df[['REFPOSALT', 'FREQ']]
     mask = mres_df['REFPOSALT'].isin(mutation_list)
     mres_df = mres_df[mask]
-    result_dict = mres_df.to_dict(orient='list')
-    result_dict.update({"copy_no": copy_no})
     positions = ",".join(mutation_list)
     logging.info(f"23s mutation occurs as a {positions}, very likely in {copy_no}")
+    result_dict = {
+        "Resistance": "Resistant",
+        "Mutation": positions,
+        "Copy No": copy_no
+    }
     return result_dict
 
 def determine_copy_number(freq):

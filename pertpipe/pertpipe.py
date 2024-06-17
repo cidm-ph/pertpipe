@@ -6,13 +6,19 @@ import warnings
 import glob
 from pertpipe import assists
 from pertpipe import arguments
-from pertpipe import prn_info
+from pertpipe import virulence_info
 from pertpipe import mres_blast
 from pertpipe import mres_copy_no
 
 __version__ = "0.0.1"
 
 warnings.simplefilter(action="ignore", category=FutureWarning)
+logging.getLogger().setLevel(logging.INFO)
+warnings.simplefilter(action="ignore", category=FutureWarning)
+formatter = logging.Formatter(
+    "pertpipe]:%(levelname)s:%(asctime)s: %(message)s", datefmt="%y/%m/%d %I:%M:%S %p"
+)
+
 
 dependency_list = ["abricate", "spades.py", "mlst", "minimap2", "samtools", "bcftools"]
 ref_list = []
@@ -30,11 +36,15 @@ def pertpipe():
     args = parser.parse_args()
     now = datetime.datetime.now()
     date = now.strftime("%Y%m%d")
-    logger = logging.getLogger()
+    is_assembly = bool(args.fasta is not None)
     is_reads = bool(args.R1 is not None)
+    logger = logging.getLogger()
 
     # set outdir defaults - if no outdir is set, it will default to either the fasta or R1 location
-    if args.outdir is None and args.R1 is not None:
+    if args.outdir is None and args.fasta is not None:
+        default = os.path.dirname(args.fasta)
+        outdir = default
+    elif args.outdir is None and args.R1 is not None:
         default = os.path.dirname(args.R1)
         outdir = default
     else:
@@ -54,19 +64,12 @@ def pertpipe():
     # error log
     errorlog = os.path.join(outdir, "pertpipe_" + date + ".log")
 
-    # Ensure no duplicate handlers are added
-    if not logger.hasHandlers():
-        formatter = logging.Formatter(
-            "pertpipe:%(levelname)s:%(asctime)s: %(message)s", datefmt="%y/%m/%d %I:%M:%S %p"
-        )
-        stdout_handler = logging.StreamHandler(sys.stdout)
-        file_handler = logging.FileHandler(errorlog, mode="w+")
-        for handler in [stdout_handler, file_handler]:
-            handler.setLevel(logging.INFO)
-            handler.setFormatter(formatter)
-            logger.addHandler(handler)
-
-    logger.setLevel(logging.INFO)
+    stdout_handler = logging.StreamHandler(sys.stdout)
+    file_handler = logging.FileHandler(errorlog, mode="w+")
+    for handler in [stdout_handler, file_handler]:
+        handler.setLevel(logging.INFO)
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
 
     # cmd checks
     if is_reads is True:
@@ -80,9 +83,12 @@ def pertpipe():
         __version__,
         outdir,
     )
-
-    assists.check_files(args.R1)
-    assists.check_files(args.R2)
+    # checking file integrity and existence of output directory
+    if all(item is not None for item in [args.fasta, args.R1, args.R2]):
+        assists.check_files(args.R1)
+        assists.check_files(args.R2)
+        assists.check_files(args.fasta)
+        logging.info("Found fasta, R1 and R2, skipping Skesa")
 
     # checking all the versions and installations of dependencies.
     logging.info("Checking installs of dependencies")
@@ -91,26 +97,30 @@ def pertpipe():
     if "abricate" in dependency_list:
         assists.check_abricate()
     
-    # assembly
-    spades_outdir = maindir + "/spades"
-    folder_exists = os.path.exists(spades_outdir)
-    if not folder_exists:
-        os.makedirs(spades_outdir)
-        logging.info("Making spades output folder")
-    else:
-        logging.info(f"Spades folder exists")
+    if is_reads and is_assembly is False:
+        # assembly
+        spades_outdir = maindir + "/spades"
+        folder_exists = os.path.exists(spades_outdir)
+        if not folder_exists:
+            os.makedirs(spades_outdir)
+            logging.info("Making spades output folder")
+        else:
+            logging.info(f"Spades folder exists")
 
-    spades_result = assists.check_spades_finished(spades_outdir)
-    if spades_result is False:
-        spades = f"spades.py --careful --only-assembler --pe1-1 {args.R1} --pe1-2 {args.R2} -o {maindir}/spades"
-        assists.run_cmd(spades)
-    else:
-        logging.info("Spades has already finished for this sample. Skipping.")
+        spades_result = assists.check_spades_finished(spades_outdir)
+        if spades_result is False:
+            spades = f"spades.py --careful --only-assembler --pe1-1 {args.R1} --pe1-2 {args.R2} -o {maindir}/spades"
+            assists.run_cmd(spades)
 
-    # abricate for vaccine antigens
-    assembly = spades_outdir + "/contigs.fasta"
-    assists.check_files(assembly)
-
+        else:
+            logging.info("Spades has already finished for this sample. Skipping.")
+        assembly = spades_outdir + "/contigs.fasta"
+        assists.check_files(assembly)
+        closed = assists.check_closed_genome(assembly)
+    elif is_reads is False and is_assembly:
+        assembly = args.fasta
+        closed = assists.check_closed_genome(assembly)
+        
     prn_outdir = maindir + "/analysis"
     folder_exists = os.path.exists(prn_outdir)
     if not folder_exists:
@@ -118,7 +128,11 @@ def pertpipe():
         logging.info("Making vaccine antigens output folder")
     else:
         logging.info(f"Spades folder exists")
-    prn_info.prn_analysis(assembly, prn_outdir)
+    final_dict = {
+        "Folder": maindir
+    }
+    res_dict = virulence_info.virlence_analysis(assembly, prn_outdir, closed)
+    final_dict.update(res_dict)
 
     # 23s rRNA for macrolide resistance
     analysis_outdir = maindir + "/analysis"
@@ -129,8 +143,27 @@ def pertpipe():
     else:
         logging.info(f"analysis folder exists")
     mutation_list = mres_blast.mres_detection(assembly, analysis_outdir)
-    if mutation_list != []:
-        mres_copy_no.mres_copy_numbers(args.R1, args.R2, analysis_outdir, mutation_list)
+    if mutation_list != [] and is_assembly is False:
+        res_dict = mres_copy_no.mres_copy_numbers(args.R1, args.R2, analysis_outdir, mutation_list)
+    else:
+        res_dict = {
+            "Resistance": "Susceptible",
+            "Mutation": "N/A",
+            "Copy No": "N/A"
+            }
+    final_dict.update(res_dict)
+
+    # Extract headers and values
+    headers = list(final_dict.keys())
+    values = list(final_dict.values())
+
+    tsv_lines = ["\t".join(headers), "\t".join(values)]
+    tsv_string = "\n".join(tsv_lines)
+    output_path = outdir + "/vir_res.tsv"
+    with open(output_path, 'w') as output_file:
+        output_file.write(tsv_string)
+        logging.info(f"Writing information to {output_path}")
+    logging.info(f"Complete!")
 
 
 

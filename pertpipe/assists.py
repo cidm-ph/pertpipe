@@ -123,3 +123,40 @@ def check_spades_finished(spades_outdir):
     else:
         return False
 
+
+def get_fasta_length(prn_type):
+    length = 0
+    fasta_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "databases/bpertussis/prn.tfa")
+
+    with open(fasta_file, 'r') as file:
+        found = False
+        contig_name = ''
+        sequence_length = 0
+        
+        for line in file:
+            if line.startswith('>'):
+                if found:
+                    break  # Stop if we have already found and processed the target contig
+                contig_name = line[1:].strip()
+                if contig_name == prn_type:
+                    found = True
+                    sequence_length = 0
+            elif found:
+                sequence_length += len(line.strip())
+    return length
+
+def check_closed_genome(fasta, length_threshold=3900000):
+    contig_count = 0
+    total_length = 0
+    with open(fasta, 'r') as file:
+        for line in file:
+            if line.startswith('>'):
+                contig_count += 1
+            else:
+                total_length += len(line.strip())
+    is_length_above_threshold = total_length > length_threshold
+    if contig_count == 1 and is_length_above_threshold:
+        return True
+    else:
+        return False
+        

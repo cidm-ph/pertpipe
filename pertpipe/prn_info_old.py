@@ -13,7 +13,8 @@ def match_known_prn(is_string, prn_type, prn_cut_position):
     known_prn = {
        # "146-2733/2733" : "prn2::del(-1513,145)", #H646 prn2
         ('?', 'prn2', -42) : "prn2::del(-283, -40)", #J078
-        ('?', 'prn28', -331) : "prn2::del(666, 667)",
+        ('?', 'prn28', -331) : "prn2::del(666, 667)", #J473
+        ('?', 'prn24', -331) :"prn2::Stop-C1273T", # H697
         ('?', 'prn1', 1326): "prn2::del(−292, 1340)", # 24-013-0032 & J625 
         ('IS481', 'prn2', 1613) : "prn2::IS481(1613)", # most common IS481 insertion & 24-013-0032
         ('IS481', 'prn2', 245) : "prn2::IS481(240)", #H378 & 17-0520-4681
@@ -61,21 +62,7 @@ def blast_type_filter(blast_type):
         prn_type = None
     return prn_row, prn_type.replace("_", "")
         
-def extract_contigs(assembly_file, prn_row, prn_outdir):
-    match_contigs = prn_row[0].to_list()
-    with open(assembly_file, "r") as assembly, open(prn_outdir + "/prn_only.fasta", "w") as output_file:
-        current_contig = None
-        keep_contig = False
 
-        for line in assembly:
-                if line.startswith(">"):
-                    current_contig = line.strip()[1:].split()[0]
-                    keep_contig = current_contig in match_contigs
-                    if keep_contig:
-                        output_file.write(line)
-                elif keep_contig:
-                    output_file.write(line)
-    return prn_outdir + "/prn_only.fasta"
 
 def prn_mutations(blast_xml, hit_list):
     for blast_result in blast_xml:
@@ -122,7 +109,7 @@ def prn_analysis(assembly, prn_outdir):
     # extracting the prn contigs if more than 2 occur (likely split) and identifying if the split is caused by an IS element.
     if len(prn_row) > 1:
         is_prn = pd.DataFrame()
-        prn_contigs = extract_contigs(assembly, prn_row, prn_outdir)
+        #prn_contigs = extract_contigs(assembly, prn_row, prn_outdir)
         blast_cmd_5 = f"blastn -task megablast -query {prn_contigs} -subject {is_elements} -outfmt 6 -out {prn_outdir}/blast_prn_is.txt"
         assists.run_cmd(blast_cmd_4)
         if os.path.isfile(prn_outdir + "/blast_prn_is.txt") is True and os.stat(prn_outdir + "/blast_prn_is.txt").st_size != 0:

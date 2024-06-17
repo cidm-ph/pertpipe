@@ -7,6 +7,10 @@ from pertpipe import assists
 
 rrna_seq = os.path.join(os.path.dirname(os.path.abspath(__file__)), "databases/23S_rRNA.fasta")
 def mres_detection(assembly, outdir):
+
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+
     hit_list = []
     blast_cmd = f"blastn -task megablast -query {assembly} -subject {rrna_seq} -outfmt 6 -out {outdir}/blast_23s.txt"
     assists.run_cmd(blast_cmd)
@@ -31,11 +35,16 @@ def mres_detection(assembly, outdir):
             xml_handle = open(f"{outdir}/blast_23s.xml")
             blast_xml = NCBIXML.parse(xml_handle)
             mutation_list = mres_position(blast_xml, hit_list)
+            logging.info(f"{mutation_list}")
             return mutation_list
+        else:
+            logging.error(f"Encountered issue, potentially truncated 23S rRNA detected, or error in assembly occurred.")
+        
     
 def mres_position(blast_xml, hit_list):
     for blast_result in blast_xml:
-        if blast_result.query in hit_list:
+        accession_id = blast_result.query.split(" ")
+        if accession_id[0] in hit_list:
             for alignment in blast_result.alignments:
                 for hsp in alignment.hsps:
                     midline = hsp.match
@@ -46,5 +55,4 @@ def mres_position(blast_xml, hit_list):
                         for pos in space_positions
                     ]
                     return formatted_positions
-
     

@@ -51,8 +51,8 @@ def virlence_analysis(assembly, prn_outdir, closed):
                     blast_prn_xml = NCBIXML.parse(prn_type_xml)
                     mut_type, mutation = prn_assists.snp_mutations(blast_prn_xml, prn_row, prn_type)
                     prn_type = prn_assists.match_known_prn(mut_type, prn_type, mutation, None)
-            else:
-                prn_type = prn_assists.promoter_scan(prn_promoter, prn_row, prn_type)
+                else:
+                    prn_type = prn_assists.promoter_scan(prn_promoter, prn_row, prn_type)
         else:
             logging.info(f"Truncated PRN gene detected")
             prn_row, prn_type = prn_assists.prn_type(prn_type_info, "partial") # partial PRN typing

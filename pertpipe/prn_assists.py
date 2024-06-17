@@ -86,8 +86,8 @@ def match_known_prn(mut_type, prn_type, prn_cut_start, prn_cut_end):
         ('del', 'prn2', -276) : "prn2::del(-283, -40)", #J078
         ('dis', 'prn28', 2746) : "prn2::del(666, 667)", #J473
         ('full', 'prn24', 3080) :"prn2::Stop-C1273T", # H697
-        ('del', 'prn2', '-292, 1340'): "prn2::del(−292, 1340)", # 24-013-0032 & J625 
-        ('del', 'prn2', '-292, 145'): "prn2::del(−1513, 145)", # H696
+        ('del', 'prn2', '-292, 1340'): "prn2::del(-292, 1340)", # 24-013-0032 & J625 
+        ('del', 'prn2', '-292, 145'): "prn2::del(-1513, 145)", # H696
         ('IS481', 'prn2', 1613) : "prn2::IS481(1613)", # most common IS481 insertion & 24-013-0032
         ('IS481', 'prn2', 245) : "prn2::IS481(240)", #H378 & 17-0520-4681
         ('IS481', 'prn9', 1613) : "prn9::IS481(1613)", # J038 

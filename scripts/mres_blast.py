@@ -2,15 +2,12 @@ import os
 import pandas as pd
 import logging
 from Bio.Blast import NCBIXML
-from pertpipe import assists
+from scripts import assists
+from Bio.Seq import Seq
 
 
-rrna_seq = os.path.join(os.path.dirname(os.path.abspath(__file__)), "databases/23S_rRNA.fasta")
+rrna_seq = os.path.join(os.path.dirname(os.path.dirname(__file__)), "databases/23S_rRNA.fasta")
 def mres_detection(assembly, outdir):
-
-    logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
-
     hit_list = []
     blast_cmd = f"blastn -task megablast -query {assembly} -subject {rrna_seq} -outfmt 6 -out {outdir}/blast_23s.txt"
     assists.run_cmd(blast_cmd)
@@ -47,12 +44,27 @@ def mres_position(blast_xml, hit_list):
         if accession_id[0] in hit_list:
             for alignment in blast_result.alignments:
                 for hsp in alignment.hsps:
-                    midline = hsp.match
-                    match_count = midline.count('|') + midline.count(' ')
-                    space_positions = [pos for pos, char in enumerate(midline) if char == ' ']
-                    formatted_positions = [
-                        f"{hsp.sbjct[pos]}{pos + 1}{hsp.query[pos]}"
-                        for pos in space_positions
-                    ]
-                    return formatted_positions
+                    if hsp.align_length == 2882 and hsp.strand[1] == 'Plus':
+                        logging.info(f"BLAST alignment in forward orientation")
+                        midline = hsp.match
+                        match_count = midline.count('|') + midline.count(' ')
+                        space_positions = [pos for pos, char in enumerate(midline) if char == ' ']
+                        formatted_positions = [
+                            f"{hsp.sbjct[pos]}{pos + 1}{hsp.query[pos]}"
+                            for pos in space_positions
+                        ]
+                        return formatted_positions
+                    elif hsp.align_length == 2882 and hsp.strand[1] == 'Minus':
+                        logging.info("BLAST alignment in reverse orientation, reverse complement required.")
+                        midline = "".join(reversed(hsp.match)) #reverse the midline.
+                        query = Seq(hsp.query).reverse_complement()
+                        sbjct = Seq(hsp.sbjct).reverse_complement()
+                        space_positions = [pos for pos, char in enumerate(midline) if char == ' ']
+                        formatted_positions = [
+                            f"{sbjct[pos]}{pos + 1}{query[pos]}"
+                            for pos in space_positions
+                        ]
+                        return formatted_positions
+                    else:
+                        logging.error("IDK WHAT HAPPENED CODE IS BONKED")
     

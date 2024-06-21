@@ -2,11 +2,11 @@ import os
 import logging
 import pandas as pd
 from Bio.Blast import NCBIXML
-from pertpipe import assists
+from scripts import assists
 
-prn_seq = os.path.join(os.path.dirname(os.path.abspath(__file__)), "databases/IR_PRN.fasta")
-prn_type_seq = os.path.join(os.path.dirname(os.path.abspath(__file__)), "databases/bpertussis/prn.tfa") # all the types
-is_elements = os.path.join(os.path.dirname(os.path.abspath(__file__)), "databases/IS_elements.fasta") # IS elements.
+prn_seq = os.path.join(os.path.dirname(os.path.dirname(__file__)), "databases/IR_PRN.fasta")
+prn_type_seq = os.path.join(os.path.dirname(os.path.dirname(__file__)), "databases/bpertussis/prn.tfa") # all the types
+is_elements = os.path.join(os.path.dirname(os.path.dirname(__file__)), "databases/IS_elements.fasta") # IS elements.
 
 def match_known_prn(is_string, prn_type, prn_cut_position):
     mut_name = None

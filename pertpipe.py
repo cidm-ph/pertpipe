@@ -4,41 +4,30 @@ import os
 import sys
 import warnings
 import glob
-from pertpipe import assists
-from pertpipe import arguments
-from pertpipe import virulence_info
-from pertpipe import mres_blast
-from pertpipe import mres_copy_no
+from scripts import assists
+from scripts import arguments
+from scripts import virulence_info
+from scripts import mres_blast
+from scripts import mres_copy_no
 
 __version__ = "0.0.1"
-
 warnings.simplefilter(action="ignore", category=FutureWarning)
 logging.getLogger().setLevel(logging.INFO)
-warnings.simplefilter(action="ignore", category=FutureWarning)
 formatter = logging.Formatter(
-    "pertpipe]:%(levelname)s:%(asctime)s: %(message)s", datefmt="%y/%m/%d %I:%M:%S %p"
+    "pertpipe:%(levelname)s:%(asctime)s: %(message)s", datefmt="%y/%m/%d %I:%M:%S %p"
 )
-
 
 dependency_list = ["abricate", "spades.py", "mlst", "minimap2", "samtools", "bcftools"]
 ref_list = []
 
-import logging
-import datetime
-import os
-import sys
-
-def pertpipe():
+def pertpipe(args):
     """
     Running order of pertpipe
     """
-    parser = arguments.create_parser()  # pylint: disable=E1101
-    args = parser.parse_args()
     now = datetime.datetime.now()
     date = now.strftime("%Y%m%d")
     is_assembly = bool(args.fasta is not None)
     is_reads = bool(args.R1 is not None)
-    logger = logging.getLogger()
 
     # set outdir defaults - if no outdir is set, it will default to either the fasta or R1 location
     if args.outdir is None and args.fasta is not None:
@@ -66,6 +55,7 @@ def pertpipe():
 
     stdout_handler = logging.StreamHandler(sys.stdout)
     file_handler = logging.FileHandler(errorlog, mode="w+")
+    logger = logging.getLogger()
     for handler in [stdout_handler, file_handler]:
         handler.setLevel(logging.INFO)
         handler.setFormatter(formatter)
@@ -165,7 +155,7 @@ def pertpipe():
         logging.info(f"Writing information to {output_path}")
     logging.info(f"Complete!")
 
-
-
 if __name__ == "__main__":
-    pertpipe()
+    parser = arguments.create_parser()  # pylint: disable=E1101
+    args = parser.parse_args()
+    pertpipe(args)

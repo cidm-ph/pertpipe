@@ -1,7 +1,7 @@
 import os
 import logging
 import pandas as pd
-from pertpipe import assists
+from scripts import assists
 
 def prn_type(blast_type, length):
     prn_type = None
@@ -92,7 +92,8 @@ def match_known_prn(mut_type, prn_type, prn_cut_start, prn_cut_end):
         ('IS481', 'prn2', 245) : "prn2::IS481(240)", #H378 & 17-0520-4681
         ('IS481', 'prn9', 1613) : "prn9::IS481(1613)", # J038 
         ('IS481fwd', 'prn2', 2734) : "prn2::IS481fwd(2734)", #SRR5071044
-        ('full', 'prn2', '1179G') : "prn2::ins1185G", #H883
+        ('ins', 'prn2', '-1179G') : "prn2::ins1185G", #H883
+        ('del', 'prn2', 'G1490-') : "prn2::Stop-G1490", #H883
         ('full', 'prn22', 3080): "prn2::Stop-C233T", #J018
         ('dis', 'prn2', -73): "prn::dis(-73)", #H806 <- just says "promoter disruption"
         ('del', 'prn1', '1753, 1839'): "prn1::del(1753, 1839)",

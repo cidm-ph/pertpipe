@@ -2,9 +2,9 @@ import os
 import logging
 import pandas as pd
 from io import StringIO
-from pertpipe import assists
+from scripts import assists
 
-rrna_seq = os.path.join(os.path.dirname(os.path.abspath(__file__)), "databases/23S_rRNA.fasta")
+rrna_seq = os.path.join(os.path.dirname(os.path.dirname(__file__)), "databases/23S_rRNA.fasta")
 def mres_copy_numbers(reads1, reads2, outdir, mutation_list):
     if os.path.exists(f"{outdir}/23s_aln.sort.bam") is False or os.stat(f"{outdir}/23s_aln.sort.bam").st_size == 0:
         minimap2_cmd = f"minimap2 -ax sr {rrna_seq} {reads1} {reads2} | samtools view -b > {outdir}/23s_aln.bam"

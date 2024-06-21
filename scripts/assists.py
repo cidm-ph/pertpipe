@@ -6,7 +6,7 @@ import shutil
 import os.path
 import pkg_resources
 
-bor_vfdb_db = os.path.join(os.path.dirname(os.path.abspath(__file__)), "databases")
+bor_vfdb_db = os.path.join(os.path.dirname(os.path.dirname(__file__)), "databases")
 
 def run_cmd(command):
     """
@@ -126,7 +126,7 @@ def check_spades_finished(spades_outdir):
 
 def get_fasta_length(prn_type):
     length = 0
-    fasta_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "databases/bpertussis/prn.tfa")
+    fasta_file = os.path.join(os.path.dirname(os.path.dirname(__file__)), "databases/bpertussis/prn.tfa")
 
     with open(fasta_file, 'r') as file:
         found = False

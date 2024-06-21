@@ -3,12 +3,12 @@ import re
 import logging
 import pandas as pd
 from Bio.Blast import NCBIXML
-from pertpipe import assists
-from pertpipe import prn_assists
+from scripts import assists
+from scripts import prn_assists
 
-prn_seq = os.path.join(os.path.dirname(os.path.abspath(__file__)), "databases/IR_PRN.fasta")
-prn_type_seq = os.path.join(os.path.dirname(os.path.abspath(__file__)), "databases/bpertussis/prn.tfa") # all the types
-is_elements = os.path.join(os.path.dirname(os.path.abspath(__file__)), "databases/IS_elements.fasta") # IS elements.
+prn_seq = os.path.join(os.path.dirname(os.path.dirname(__file__)), "databases/IR_PRN.fasta")
+prn_type_seq = os.path.join(os.path.dirname(os.path.dirname(__file__)), "databases/bpertussis/prn.tfa") # all the types
+is_elements = os.path.join(os.path.dirname(os.path.dirname(__file__)), "databases/IS_elements.fasta") # IS elements.
 
 def virlence_analysis(assembly, prn_outdir, closed):
     # commands needed for prn analysis
@@ -100,7 +100,7 @@ def virlence_analysis(assembly, prn_outdir, closed):
 
     # removing the ptx suffix from BCDE so that its ptxA(X)B(X)C(X)D(X)
     #ptx_toxin, ptxp, fim2, fim3 = None
-    ptx_toxin = ptx_toxin_cols.iloc[1] + ''.join([col[3:] for col in ptx_toxin_cols.iloc[3:]])
+    ptx_toxin = ptx_toxin_cols.iloc[1] + ''.join([col[3:] for col in ptx_toxin_cols.iloc[2:]])
     ptxp, fim2, fim3 = mlst_info[4][0], mlst_info[11][0], mlst_info[12][0]
 
     # final dictionary to be returned.

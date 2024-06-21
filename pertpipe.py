@@ -53,9 +53,13 @@ def pertpipe(args):
     # error log
     errorlog = os.path.join(outdir, "pertpipe_" + date + ".log")
 
+    # Clear existing handlers
+    logger = logging.getLogger()
+    if logger.hasHandlers():
+        logger.handlers.clear()
+
     stdout_handler = logging.StreamHandler(sys.stdout)
     file_handler = logging.FileHandler(errorlog, mode="w+")
-    logger = logging.getLogger()
     for handler in [stdout_handler, file_handler]:
         handler.setLevel(logging.INFO)
         handler.setFormatter(formatter)

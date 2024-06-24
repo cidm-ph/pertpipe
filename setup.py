@@ -91,8 +91,24 @@ def pertpipe_setup():
     elif check_existing.returncode == 0 and check_existing.stdout == expected_result:
         logging.info("Everything looks good, setup of MLST complete")
 
-# test MLST cos having issues with ptxA being ~33 not 1.
-
+    # test MLST cos having issues with ptxA being ~33 not 1.
+    pert_test = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tests/H640.fasta")
+    cmd = f"mlst --scheme bpertussis {pert_test}"
+    mlst_result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, text=True)
+    if mlst_result.returncode == 0:
+        logging.info(f"Successfully run {cmd}")
+    else:
+        logging.error(f"{mlst_result.stderr}")
+        sys.exit()
+    bpertussis_mlst = mlst_result.stdout.split("\t")[5]
+    expected_result = "ptxA(1)"
+    bad_result = "ptxA(~33)"
+    if bpertussis_mlst == expected_result:
+        logging.info(f"MLST scheme test success")
+    elif bpertussis_mlst == bad_result:
+        logging.info(f"MLST scheme test failed, this sample should be ptxA1 not ptxA~33. Need to re-copy/re-download database and re-do setup.")
+    else:
+        logging.critical(f"MLST scheme test failed. Need to re-copy/re-download database and re-do.")
 
 # set up abricate automatically.
 

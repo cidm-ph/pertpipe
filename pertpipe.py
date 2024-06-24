@@ -130,12 +130,6 @@ def pertpipe(args):
 
     # 23s rRNA for macrolide resistance
     analysis_outdir = maindir + "/analysis"
-    folder_exists = os.path.exists(analysis_outdir)
-    if not folder_exists:
-        os.makedirs(analysis_outdir)
-        logging.info("Making analysis output folder")
-    else:
-        logging.info(f"analysis folder exists")
     mutation_list = mres_blast.mres_detection(assembly, analysis_outdir)
     if mutation_list != [] and is_assembly is False:
         res_dict = mres_copy_no.mres_copy_numbers(args.R1, args.R2, analysis_outdir, mutation_list)

@@ -10,10 +10,11 @@ prn_seq = os.path.join(os.path.dirname(os.path.dirname(__file__)), "databases/IR
 prn_type_seq = os.path.join(os.path.dirname(os.path.dirname(__file__)), "databases/bpertussis/prn.tfa") # all the types
 is_elements = os.path.join(os.path.dirname(os.path.dirname(__file__)), "databases/IS_elements.fasta") # IS elements.
 
-def virlence_analysis(assembly, prn_outdir, closed):
+def virlence_analysis(assembly, prn_outdir, closed, datadir):
     # commands needed for prn analysis
     abricate_cmd = f"abricate --datadir {assists.bor_vfdb_db} --db bp-only_vfdb --quiet {assembly} > {prn_outdir}/vfdb.txt"
     mlst_cmd = f"mlst --scheme bpertussis {assembly} > {prn_outdir}/mlst.txt"
+    mlst_datadir_cmd = f"mlst --scheme bpertussis --datadir {datadir} {assembly} > {prn_outdir}/mlst.txt"
     blast_cmd = f"blastn -task megablast -query {assembly} -subject {prn_seq} -outfmt 6 -out {prn_outdir}/blast_prn.txt"
     blast_cmd_2 = f"blastn -task megablast -query {assembly} -subject {prn_seq} -outfmt 5 -out {prn_outdir}/blast_prn.xml"
     blast_cmd_3 = f"blastn -task megablast -query {assembly} -subject {prn_type_seq} -outfmt 6 -min_raw_gapped_score 100 -out {prn_outdir}/blast_prn_type.txt"
@@ -22,9 +23,13 @@ def virlence_analysis(assembly, prn_outdir, closed):
     #is_string = "?"
 
     # run the commands
-    for command in [abricate_cmd, mlst_cmd, blast_cmd, blast_cmd_2, blast_cmd_3, blast_cmd_4]: 
+    for command in [abricate_cmd, blast_cmd, blast_cmd_2, blast_cmd_3, blast_cmd_4]: 
         assists.run_cmd(command)
-
+        if datadir is not None:
+            assists.run_cmd(mlst_datadir_cmd)
+        else:
+            assists.run_cmd(mlst_cmd)
+            
     # check the outputs
     for outfile in [f"{prn_outdir}/vfdb.txt", f"{prn_outdir}/mlst.txt", f"{prn_outdir}/blast_prn.txt"]:
         assists.check_files(outfile)

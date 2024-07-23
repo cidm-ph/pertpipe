@@ -127,7 +127,7 @@ def pertpipe(args):
     final_dict = {
         "Folder": maindir
     }
-    res_dict = virulence_info.virlence_analysis(assembly, prn_outdir, closed)
+    res_dict = virulence_info.virlence_analysis(assembly, prn_outdir, closed, args.datadir)
     final_dict.update(res_dict)
 
     # 23s rRNA for macrolide resistance

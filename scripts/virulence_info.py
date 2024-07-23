@@ -25,11 +25,11 @@ def virlence_analysis(assembly, prn_outdir, closed, datadir):
     # run the commands
     for command in [abricate_cmd, blast_cmd, blast_cmd_2, blast_cmd_3, blast_cmd_4]: 
         assists.run_cmd(command)
-        if datadir is not None:
-            assists.run_cmd(mlst_datadir_cmd)
-        else:
-            assists.run_cmd(mlst_cmd)
-            
+    if datadir is not None:
+        assists.run_cmd(mlst_datadir_cmd)
+    else:
+        assists.run_cmd(mlst_cmd)
+
     # check the outputs
     for outfile in [f"{prn_outdir}/vfdb.txt", f"{prn_outdir}/mlst.txt", f"{prn_outdir}/blast_prn.txt"]:
         assists.check_files(outfile)

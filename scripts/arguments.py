@@ -8,6 +8,7 @@ def create_parser():
     parser.add_argument("--R1", help="Path to R1 file")
     parser.add_argument("--R2", help="Path to R2 file")
     parser.add_argument("--fasta", "-f", help="Path to Fasta file")
+    parser.add_argument("--datadir", "-d", help="Path to MLST data directory")
     parser.add_argument(
         "--longread",
         "-l",

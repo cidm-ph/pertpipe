@@ -91,6 +91,24 @@ def check_dependencies(cmd_exec):
         logging.critical(msg)
         sys.exit(1)
 
+def check_mlst(datadir):
+    if datadir is not None:    
+        result = subprocess.run(
+            ["mlst", "--longlist", "--datadir", datadir],
+            capture_output=True,
+            text=True,
+        )
+    else:
+        result = subprocess.run(
+            ["mlst --longlist | grep bpertussis"],
+            capture_output=True,
+            text=True,
+        )
+    if result.returncode > 0:
+        logging.critical("MLST database is not prepared")
+        logging.critical(
+            "correct by running: mlst/scripts/mlst-make_blast_db"
+        )
 
 def check_abricate():
     result = subprocess.run(

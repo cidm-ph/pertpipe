@@ -90,6 +90,8 @@ def pertpipe(args):
         assists.check_dependencies(dependency)
     if "abricate" in dependency_list:
         assists.check_abricate()
+    elif "mlst" in dependency_list:
+        assists.check_mlst(args.datadir)
     
     if is_reads and is_assembly is False:
         # assembly

@@ -14,7 +14,7 @@ def virlence_analysis(assembly, prn_outdir, closed, datadir):
     # commands needed for prn analysis
     abricate_cmd = f"abricate --datadir {assists.bor_vfdb_db} --db bp-only_vfdb --quiet {assembly} > {prn_outdir}/vfdb.txt"
     mlst_cmd = f"mlst --scheme bpertussis {assembly} > {prn_outdir}/mlst.txt"
-    mlst_datadir_cmd = f"mlst --scheme bpertussis --datadir {datadir}/pubmlst --blastdb {datadir}/blast {assembly} > {prn_outdir}/mlst.txt"
+    mlst_datadir_cmd = f"mlst --scheme bpertussis --datadir {datadir}/pubmlst --blastdb {datadir}/blast/mlst.fa {assembly} > {prn_outdir}/mlst.txt"
     blast_cmd = f"blastn -task megablast -query {assembly} -subject {prn_seq} -outfmt 6 -out {prn_outdir}/blast_prn.txt"
     blast_cmd_2 = f"blastn -task megablast -query {assembly} -subject {prn_seq} -outfmt 5 -out {prn_outdir}/blast_prn.xml"
     blast_cmd_3 = f"blastn -task megablast -query {assembly} -subject {prn_type_seq} -outfmt 6 -min_raw_gapped_score 100 -out {prn_outdir}/blast_prn_type.txt"

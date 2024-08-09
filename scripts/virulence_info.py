@@ -10,7 +10,7 @@ prn_seq = os.path.join(os.path.dirname(os.path.dirname(__file__)), "databases/IR
 prn_type_seq = os.path.join(os.path.dirname(os.path.dirname(__file__)), "databases/bpertussis/prn.tfa") # all the types
 is_elements = os.path.join(os.path.dirname(os.path.dirname(__file__)), "databases/IS_elements.fasta") # IS elements.
 
-def virlence_analysis(assembly, prn_outdir, closed, datadir):
+def virulence_analysis(assembly, prn_outdir, closed, datadir):
     # commands needed for prn analysis
     abricate_cmd = f"abricate --datadir {assists.bor_vfdb_db} --db bp-only_vfdb --quiet {assembly} > {prn_outdir}/vfdb.txt"
     mlst_cmd = f"mlst --scheme bpertussis {assembly} > {prn_outdir}/mlst.txt"

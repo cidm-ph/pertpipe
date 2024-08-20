@@ -5,6 +5,8 @@ import logging
 import shutil
 import os.path
 import pkg_resources
+from Bio import SeqIO
+from Bio import GenBank
 
 bor_vfdb_db = os.path.join(os.path.dirname(os.path.dirname(__file__)), "databases")
 
@@ -140,6 +142,20 @@ def check_spades_finished(spades_outdir):
         return False
     else:
         return False
+    
+def check_prokka_finished(prokka_outdir, name):
+    result = "Annotation finished successfully."
+    prokka_log = name + ".log"
+    prokka_log = os.path.join(prokka_outdir, prokka_log)
+    
+    if os.path.isfile(prokka_log) and os.stat(prokka_log).st_size != 0:
+        with open(prokka_log, 'r') as log:
+            for line in log:
+                if result in line:
+                    return True
+        return False
+    else:
+        return False
 
 
 def get_fasta_length(prn_type):
@@ -177,4 +193,41 @@ def check_closed_genome(fasta, length_threshold=3900000):
         return True
     else:
         return False
+
+def contig_prokka_tag(assembly, name, prokka_outdir):
+    # Paths to the GBK and FASTA files
+    prokka_gbk = prokka_outdir + "/" + name + ".gbk"
+    fasta_file = assembly
+
+    # Parse the GBK file to extract locus and size
+    gbk_data = []
+    with open(prokka_gbk) as handle:
+        for record in GenBank.parse(handle):
+            locus = record.locus
+            size = int(record.size)  # Extract size and convert to integer
+            gbk_data.append((locus, size))
+
+    # Parse the FASTA file to extract headers and sequences
+    min_length = 200
+    fasta_data = []
+    for record in SeqIO.parse(fasta_file, "fasta"):
+        header = record.id  # Extract the header (without the ">" sign)
+        sequence = str(record.seq)  # Convert the sequence to a string
+        if len(sequence) >= min_length:
+            fasta_data.append((header, len(sequence)))
+
+    # Check that the number of entries matches
+    if len(gbk_data) != len(fasta_data):
+        print("Error: Number of loci in GBK file does not match number of sequences in FASTA file.")
+        return None
+
+    # Verify that the sequence lengths match
+    locus_to_sequence = {}
+    for (locus, expected_size), (header, actual_size) in zip(gbk_data, fasta_data):
+        if expected_size != actual_size:
+            print(f"Warning: Size mismatch for locus {locus}. Expected {expected_size}, found {actual_size}.")
+        else:
+            locus_to_sequence[locus] = header
+
+    return prokka_gbk, locus_to_sequence
         

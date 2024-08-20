@@ -9,6 +9,7 @@ from scripts import arguments
 from scripts import virulence_info
 from scripts import mres_blast
 from scripts import mres_copy_no
+from scripts import mres_map
 
 __version__ = "0.0.1"
 warnings.simplefilter(action="ignore", category=FutureWarning)
@@ -82,7 +83,7 @@ def pertpipe(args):
         assists.check_files(args.R1)
         assists.check_files(args.R2)
         assists.check_files(args.fasta)
-        logging.info("Found fasta, R1 and R2, skipping Skesa")
+        logging.info("Found fasta, R1 and R2, skipping assembly")
 
     # checking all the versions and installations of dependencies.
     logging.info("Checking installs of dependencies")
@@ -113,28 +114,59 @@ def pertpipe(args):
         assembly = spades_outdir + "/contigs.fasta"
         assists.check_files(assembly)
         closed = assists.check_closed_genome(assembly)
+    
     elif is_reads is False and is_assembly:
         assembly = args.fasta
         closed = assists.check_closed_genome(assembly)
-        
+    
+    elif is_reads and is_assembly:
+        assembly = args.fasta
+        closed = assists.check_closed_genome(assembly)
+
+    prokka_outdir = maindir + "/prokka"
+    folder_exists = os.path.exists(prokka_outdir)
+    name = os.path.basename(maindir)
+    if not folder_exists:
+        os.makedirs(prokka_outdir)
+        logging.info("Making prokka output folder")
+    else:
+        logging.info(f"Prokka folder exists")
+    prokka_result = assists.check_prokka_finished(prokka_outdir, name)
+    if prokka_result is False and args.meta is False:
+        logging.info(f"Running Prokka")
+        prokka = f"prokka --outdir {prokka_outdir} --force --cpus 8 --prefix {name} --locustag {name} --compliant --gcode 11 {assembly}"
+        assists.run_cmd(prokka)
+    elif prokka_result is False and args.meta is True:
+        logging.info(f"Running Prokka in Metagenomics mode")
+        prokka = f"prokka --outdir {prokka_outdir} --force --cpus 8 --prefix {name} --locustag {name} --compliant --gcode 11 {assembly} --metagenome"
+        assists.run_cmd(prokka)
+    else:
+        logging.info("Prokka has already finished for this sample. Skipping.")
+
     prn_outdir = maindir + "/analysis"
     folder_exists = os.path.exists(prn_outdir)
     if not folder_exists:
         os.makedirs(prn_outdir)
-        logging.info("Making vaccine antigens output folder")
+        logging.info("Making analysis output folder")
     else:
-        logging.info(f"Spades folder exists")
+        logging.info(f"Analysis folder exists")
+    
     final_dict = {
         "Folder": maindir
     }
-    res_dict = virulence_info.virulence_analysis(assembly, prn_outdir, closed, args.datadir)
+
+    res_dict = virulence_info.virulence_analysis(assembly, prn_outdir, closed, args.datadir, prokka_outdir)
     final_dict.update(res_dict)
 
     # 23s rRNA for macrolide resistance
     analysis_outdir = maindir + "/analysis"
-    mutation_list = mres_blast.mres_detection(assembly, analysis_outdir)
-    if mutation_list != [] and is_assembly is False:
+    mutation_list = mres_blast.mres_detection(assembly, analysis_outdir, args.meta)
+    if mutation_list != [] and args.R1 is not None and args.R2 is not None:
+        logging.info(f"Determining potential copy number of 23S rRNA resistance mutations")
         res_dict = mres_copy_no.mres_copy_numbers(args.R1, args.R2, analysis_outdir, mutation_list)
+    elif mutation_list == [] and args.meta:
+        logging.info(f"Seems assembly did not contain 23S mutation, lets just map it directly.")
+        res_dict = mres_map.mres_mapping_only(args.R1, args.R2, analysis_outdir)
     else:
         res_dict = {
             "Resistance": "Susceptible",

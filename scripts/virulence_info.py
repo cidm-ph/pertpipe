@@ -5,12 +5,13 @@ import pandas as pd
 from Bio.Blast import NCBIXML
 from scripts import assists
 from scripts import prn_assists
+#from scripts import draw_figure
 
 prn_seq = os.path.join(os.path.dirname(os.path.dirname(__file__)), "databases/IR_PRN.fasta")
 prn_type_seq = os.path.join(os.path.dirname(os.path.dirname(__file__)), "databases/bpertussis/prn.tfa") # all the types
 is_elements = os.path.join(os.path.dirname(os.path.dirname(__file__)), "databases/IS_elements.fasta") # IS elements.
 
-def virulence_analysis(assembly, prn_outdir, closed, datadir):
+def virulence_analysis(assembly, prn_outdir, closed, datadir, prokka_outdir):
     # commands needed for prn analysis
     abricate_cmd = f"abricate --datadir {assists.bor_vfdb_db} --db bp-only_vfdb --quiet {assembly} > {prn_outdir}/vfdb.txt"
     mlst_cmd = f"mlst --scheme bpertussis {assembly} > {prn_outdir}/mlst.txt"
@@ -41,7 +42,7 @@ def virulence_analysis(assembly, prn_outdir, closed, datadir):
     #prn_promoter = pd.read_csv(f"{prn_outdir}/blast_type.txt", sep="\t", header=None)
     prn_type_xml = open(f"{prn_outdir}/blast_prn_type.xml")
     prn_promoter = pd.read_csv(f"{prn_outdir}/blast_prn.txt", sep="\t", header=None)
-    prn_promoter_xml = open(f"{prn_outdir}/blast_prn.xml")
+    prn_xml = open(f"{prn_outdir}/blast_prn.xml")
 
     # this is the 1 PRN gene checking & pathway
     if len(prn_vfdb) == 1:
@@ -51,9 +52,15 @@ def virulence_analysis(assembly, prn_outdir, closed, datadir):
             logging.info(f"Full length PRN gene detected")
             prn_row, prn_type = prn_assists.prn_type(prn_type_info, "full") # full PRN typing
             is_prn1or2 = bool(re.findall(r'\bprn[12]\b', prn_type)) # check if its prn1 or prn2, if not find snps
+            if closed == True:  # check if closed genome
+                prn_promoter_xml = NCBIXML.parse(prn_xml)
+                prn_contigs = prn_assists.extract_prn(prn_promoter_xml, prn_promoter, prn_outdir) # extract only PRN region in closed genomes.
+            # this command only should be used for short read assembled genomes.
+            else:
+                prn_contigs = prn_assists.extract_contigs(assembly, prn_row, prn_outdir) # extracting the contigs matching the prn
             if is_prn1or2 is True:
                 if prn_row.iloc[0][2] != 100.0: # now check if we need to screen for new mutations!
-                    blast_prn_xml = NCBIXML.parse(prn_type_xml)
+                    blast_prn_xml = NCBIXML.parse(prn_xml)
                     mut_type, mutation = prn_assists.snp_mutations(blast_prn_xml, prn_row, prn_type)
                     prn_type = prn_assists.match_known_prn(mut_type, prn_type, mutation, None)
                 else:
@@ -62,7 +69,7 @@ def virulence_analysis(assembly, prn_outdir, closed, datadir):
             logging.info(f"Truncated PRN gene detected")
             prn_row, prn_type = prn_assists.prn_type(prn_type_info, "partial") # partial PRN typing
             if closed == True:
-                prn_promoter_xml = NCBIXML.parse(prn_promoter_xml)
+                prn_promoter_xml = NCBIXML.parse(prn_xml)
                 prn_contigs = prn_assists.extract_prn(prn_promoter_xml, prn_promoter, prn_outdir)
             # this command only should be used for short read assembled genomes.
             else:
@@ -83,7 +90,7 @@ def virulence_analysis(assembly, prn_outdir, closed, datadir):
         logging.info(f"2 or more PRN genes detected, going down PRN deficient analysis")
         prn_row, prn_type = prn_assists.prn_type(prn_type_info, "dupe") # duplicate PRN typing
         if closed == True:
-            prn_promoter_xml = NCBIXML.parse(prn_promoter_xml)
+            prn_promoter_xml = NCBIXML.parse(prn_xml)
             prn_assists.extract_prn(prn_promoter_xml, prn_promoter, prn_outdir)
         else:
             prn_contigs = prn_assists.extract_contigs(assembly, prn_row, prn_outdir) # extracting the contigs matching the prn
@@ -95,7 +102,9 @@ def virulence_analysis(assembly, prn_outdir, closed, datadir):
             else:
                 prn_type = prn_assists.dupe_type(prn_promoter, prn_row, None, prn_type)
 
-    
+    name = os.path.basename(os.path.dirname(prokka_outdir))
+    prokka_gbk, contig_prokka_map = assists.contig_prokka_tag(assembly, name, prokka_outdir)
+    #draw_figure.draw_clinker(prn_type, prn_outdir, prokka_gbk, contig_prokka_map)
 
     # filling the remaining information from MLST/Virulence gene types
     mlst_info = pd.read_csv(f"{prn_outdir}/mlst.txt", sep="\t", header=None)

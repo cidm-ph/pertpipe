@@ -10,6 +10,11 @@ def create_parser():
     parser.add_argument("--fasta", "-f", help="Path to Fasta file")
     parser.add_argument("--datadir", "-d", help="Path to MLST data directory")
     parser.add_argument(
+        "--meta", 
+        "-m", 
+        action="store_true",
+        help="For use in targeted or clinical metagenomics, to skip Spades and takes into consideration a metagenomic style input")
+    parser.add_argument(
         "--longread",
         "-l",
         action="store_true",

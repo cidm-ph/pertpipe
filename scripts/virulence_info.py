@@ -60,7 +60,7 @@ def virulence_analysis(assembly, prn_outdir, closed, datadir, prokka_outdir):
                 prn_contigs = prn_assists.extract_contigs(assembly, prn_row, prn_outdir) # extracting the contigs matching the prn
             if is_prn1or2 is True:
                 if prn_row.iloc[0][2] != 100.0: # now check if we need to screen for new mutations!
-                    blast_prn_xml = NCBIXML.parse(prn_xml)
+                    blast_prn_xml = NCBIXML.parse(prn_type_xml)
                     mut_type, mutation = prn_assists.snp_mutations(blast_prn_xml, prn_row, prn_type)
                     prn_type = prn_assists.match_known_prn(mut_type, prn_type, mutation, None)
                 else:

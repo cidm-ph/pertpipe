@@ -128,6 +128,7 @@ def snp_mutations(blast_xml, prn_row, prn_type):
     mutation = None
     prn_type_mod = prn_type.replace("prn", "prn_")
     hit_list = prn_row[0].to_list()
+    fmt_pos_dict = {}
     #prn_type_list = prn_row[1].to_list()
     for blast_result in blast_xml:
         blast_name = blast_result.query.split(" ")[0]

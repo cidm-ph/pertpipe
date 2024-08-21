@@ -148,6 +148,19 @@ def check_spades_finished(spades_outdir):
     else:
         return False
     
+def check_megahit_finished(megahit_outdir):
+    result = "ALL DONE."
+    megahit_log = os.path.join(megahit_outdir, "log")
+    
+    if os.path.isfile(megahit_log) and os.stat(megahit_log).st_size != 0:
+        with open(megahit_log, 'r') as log:
+            for line in log:
+                if result in line:
+                    return True
+        return False
+    else:
+        return False
+    
 def check_prokka_finished(prokka_outdir, name):
     result = "Annotation finished successfully."
     prokka_log = name + ".log"

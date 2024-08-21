@@ -61,7 +61,10 @@ def check_folders(folder):
 def check_dependencies(cmd_exec):
     cmd_path = shutil.which(cmd_exec)
     vcmd = subprocess.run([cmd_exec, "--version"], capture_output=True, text=True)
-    result = vcmd.stdout.splitlines()
+    if vcmd.returncode == 0 and vcmd.stdout != '':
+        result = vcmd.stdout.splitlines()
+    else:
+        result = vcmd.stderr.splitlines()
     if cmd_exec == "abricate":
         version = " ".join(result).replace("abricate ", "v")
         if pkg_resources.parse_version(version) < pkg_resources.parse_version(
@@ -75,6 +78,8 @@ def check_dependencies(cmd_exec):
         version = result[0].replace("mlst ", "v")
     elif cmd_exec == 'minimap2':
         version = "v" + result[0]
+    elif cmd_exec == 'prokka':
+        version = result[0].replace("prokka ", "v")
     if cmd_exec == "samtools":
             version = result[0].replace("samtools ", "")
             if pkg_resources.parse_version(version) < pkg_resources.parse_version(

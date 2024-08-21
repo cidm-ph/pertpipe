@@ -18,7 +18,7 @@ formatter = logging.Formatter(
     "pertpipe:%(levelname)s:%(asctime)s: %(message)s", datefmt="%y/%m/%d %I:%M:%S %p"
 )
 
-dependency_list = ["abricate", "spades.py", "mlst", "minimap2", "samtools", "bcftools"]
+dependency_list = ["abricate", "spades.py", "mlst", "minimap2", "samtools", "bcftools", "prokka"]
 ref_list = []
 
 def pertpipe(args):

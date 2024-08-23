@@ -55,7 +55,14 @@ def prn_type(blast_type, length):
         agg_dict = {col: 'mean' for col in cols_to_mean} # start the creation of a dictionary that will perform the adding/averaging
         agg_dict.update({col: 'sum' for col in cols_to_add}) # update for the sum column
         blast_type_filter = blast_type.groupby(1).agg(agg_dict).reset_index()
-        prn_type = blast_type_filter.loc[blast_type_filter[11].idxmax()][1]
+        max_value = blast_type_filter[11].max()
+        top_rows = blast_type_filter[blast_type_filter[11] == max_value]
+        if len(top_rows) < 1:
+            prn_type = blast_type_filter.loc[blast_type_filter[11].idxmax()][1]
+        else:
+            top_prn_under_10 = top_rows[top_rows[1].apply(lambda x: int(x.split('_')[1]) < 10)]
+            if not top_prn_under_10.empty:
+                prn_type = top_prn_under_10.loc[top_prn_under_10[11].idxmax()][1]
         prn_row = blast_type[blast_type[1] == prn_type]
     else:
         prn_row = None

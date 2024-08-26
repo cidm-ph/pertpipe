@@ -125,7 +125,7 @@ def pertpipe(args):
         else:
             logging.info(f"Megahit folder exists")
 
-        megahit_result = assists.check_megahit_finished(spades_outdir)
+        megahit_result = assists.check_megahit_finished(megahit_outdir)
         if megahit_result is False:
             megahit = f"megahit -1 {args.R1} -2 {args.R2} -o {megahit_outdir}"
             assists.run_cmd(megahit)

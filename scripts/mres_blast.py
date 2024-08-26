@@ -36,7 +36,7 @@ def mres_detection(assembly, outdir, meta):
             hit_list.append(hit_name)
             if perc_id == 100.0 and aln_len > 2880 and aln_len < 2885:
                 logging.info(f'Full length 23s rRNA detected, with no mutations')
-                return []
+                mutation_list = []
             elif perc_id >= 99 and perc_id < 100 and aln_len >= 2880 and aln_len <= 2885:
                 logging.info(f'23s rRNA detected with mutations')
                 xml_handle = open(f"{outdir}/blast_23s.xml")

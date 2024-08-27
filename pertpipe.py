@@ -127,7 +127,7 @@ def pertpipe(args):
 
         megahit_result = assists.check_megahit_finished(megahit_outdir)
         if megahit_result is False:
-            megahit = f"megahit -1 {args.R1} -2 {args.R2} -o {megahit_outdir} --force"
+            megahit = f"megahit -1 {args.R1} -2 {args.R2} -o {megahit_outdir}"
             assists.run_cmd(megahit)
         else:
             logging.info("Megahit has already finished for this sample. Skipping.")

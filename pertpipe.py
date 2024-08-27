@@ -119,11 +119,11 @@ def pertpipe(args):
         # metagenomics assembly
         megahit_outdir = maindir + "/megahit"
         folder_exists = os.path.exists(megahit_outdir)
-        if not folder_exists:
-            os.makedirs(megahit_outdir)
-            logging.info("Making megahit output folder")
-        else:
-            logging.info(f"Megahit folder exists")
+        #if not folder_exists:
+        #    os.makedirs(megahit_outdir)
+        #    logging.info("Making megahit output folder")
+        #else:
+        #    logging.info(f"Megahit folder exists")
 
         megahit_result = assists.check_megahit_finished(megahit_outdir)
         if megahit_result is False:

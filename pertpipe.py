@@ -94,7 +94,7 @@ def pertpipe(args):
     elif "mlst" in dependency_list:
         assists.check_mlst(args.datadir)
     
-    if is_reads and is_assembly is False and args.meta is False:
+    if is_reads and is_assembly is False:
         # assembly
         spades_outdir = maindir + "/spades"
         folder_exists = os.path.exists(spades_outdir)
@@ -105,36 +105,17 @@ def pertpipe(args):
             logging.info(f"Spades folder exists")
 
         spades_result = assists.check_spades_finished(spades_outdir)
-        if spades_result is False:
+        if spades_result is False and args.meta is False:
             spades = f"spades.py --careful --only-assembler --pe1-1 {args.R1} --pe1-2 {args.R2} -o {maindir}/spades"
             assists.run_cmd(spades)
-
+        elif spades_result is False and args.meta is True:
+            spades = f"spades.py --meta --only-assembler --pe1-1 {args.R1} --pe1-2 {args.R2} -o {maindir}/spades"
         else:
             logging.info("Spades has already finished for this sample. Skipping.")
         assembly = spades_outdir + "/contigs.fasta"
         assists.check_files(assembly)
         closed = assists.check_closed_genome(assembly)
-
-    elif is_reads and is_assembly is False and args.meta is True:
-        # metagenomics assembly
-        megahit_outdir = maindir + "/megahit"
-        folder_exists = os.path.exists(megahit_outdir)
-        #if not folder_exists:
-        #    os.makedirs(megahit_outdir)
-        #    logging.info("Making megahit output folder")
-        #else:
-        #    logging.info(f"Megahit folder exists")
-
-        megahit_result = assists.check_megahit_finished(megahit_outdir)
-        if megahit_result is False:
-            megahit = f"megahit -1 {args.R1} -2 {args.R2} -o {megahit_outdir}"
-            assists.run_cmd(megahit)
-        else:
-            logging.info("Megahit has already finished for this sample. Skipping.")
-
-        assembly = megahit_outdir + "/final.contigs.fa"
-        closed = assists.check_closed_genome(assembly)
-
+        
     elif is_reads is False and is_assembly:
         assembly = args.fasta
         closed = assists.check_closed_genome(assembly)
@@ -191,7 +172,7 @@ def pertpipe(args):
         res_dict = {
             "Resistance": "Resistant",
             "Mutation": positions,
-            "Copy No": str(copies),
+            "Copy No": f"{str(copies)} copies",
         }
     elif mutation_list == [] and args.meta:
         logging.info(f"Seems assembly did not contain 23S mutation, lets just map it directly.")

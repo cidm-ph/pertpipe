@@ -1,4 +1,5 @@
 import os
+from Bio import SeqIO
 import logging
 import pandas as pd
 from scripts import assists
@@ -187,7 +188,7 @@ def dupe_type(prn_promoter, prn_row, is_prn, prn_type):
             prn_cut_start = row[9]
             logging.info(f"prn_cut_start: {prn_cut_start}")
     
-    # filter the row with ending prn gene.
+    # filter the row with ending prn gene.rc
     other_row = prn_row[~((prn_row[8] == 1) | (prn_row[9] == 1))]
     if not other_row.empty:
         row = other_row.iloc[0]
@@ -309,22 +310,38 @@ def promoter_scan(prn_promoter, prn_row, prn_type):
     
     return prn_type
 
-def extract_prn(prn_promoter_xml, prn_promoter, prn_outdir):
+def extract_prn(assembly, prn_promoter_xml, prn_promoter, prn_outdir, length):
     prn_file = prn_outdir + "/prn_only.fasta"
     max_value = prn_promoter[11].max()
     rows_with_max_value = prn_promoter[prn_promoter[11] == max_value]
     top_hit = rows_with_max_value.iloc[0][1]
     top_hit_length = rows_with_max_value.iloc[0][3]
-    for blast_result in prn_promoter_xml:
-        for alignment in blast_result.alignments:
-            if alignment.hit_id == top_hit:
-                for hsp in alignment.hsps:
-                    if hsp.align_length == top_hit_length:
-                        with open(prn_file, "w") as output_file:
-                            # header
-                            output_file.write(">prn_only\n")
-                            # sequence
-                            output_file.write(hsp.query)
-                            logging.info(f"Writing extracted PRN sequence to {prn_file}")
-    return prn_file
+    if length == "full" or length == "partial":
+        for blast_result in prn_promoter_xml:
+            for alignment in blast_result.alignments:
+                if alignment.hit_id == top_hit:
+                    for hsp in alignment.hsps:
+                        if hsp.align_length == top_hit_length:
+                            with open(prn_file, "w") as output_file:
+                                # header
+                                output_file.write(">prn_only\n")
+                                # sequence
+                                output_file.write(hsp.query)
+                                logging.info(f"Writing extracted {length} length PRN sequence to {prn_file}")
+    elif length == "dupe":
+        logging.info(f"Pulling entire length of disrupted PRN gene")
+        filter_prn = prn_promoter[prn_promoter[1] == top_hit]
+        top2_bitscore = filter_prn.sort_values(by=11, ascending=False).head(2)
+        col6_and_col7 = top2_bitscore[[6, 7]]
+        end_coord = col6_and_col7.values.max()
+        start_coord = col6_and_col7.values.min()
+        record = SeqIO.read(assembly, "fasta")
+        with open(prn_file, "w") as output_file:
+            # header
+            output_file.write(">prn_only\n")
+            # sequence
+            prn_only = record.seq[start_coord-1:end_coord]
+            output_file.write(str(prn_only) + "\n")
+            logging.info(f"Writing extracted {length} length PRN sequence to {prn_file}")
+    return prn_outdir + "/prn_only.fasta"
                     

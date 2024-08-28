@@ -54,13 +54,13 @@ def virulence_analysis(assembly, prn_outdir, closed, datadir, prokka_outdir):
             is_prn1or2 = bool(re.findall(r'\bprn[12]\b', prn_type)) # check if its prn1 or prn2, if not find snps
             if closed == True:  # check if closed genome
                 prn_promoter_xml = NCBIXML.parse(prn_xml)
-                prn_contigs = prn_assists.extract_prn(prn_promoter_xml, prn_promoter, prn_outdir) # extract only PRN region in closed genomes.
+                prn_contigs = prn_assists.extract_prn(assembly, prn_promoter_xml, prn_promoter, prn_outdir, "full") # extract only PRN region in closed genomes.
             # this command only should be used for short read assembled genomes.
             else:
                 prn_contigs = prn_assists.extract_contigs(assembly, prn_row, prn_outdir) # extracting the contigs matching the prn
             if is_prn1or2 is True:
                 if prn_row.iloc[0][2] != 100.0: # now check if we need to screen for new mutations!
-                    blast_prn_xml = NCBIXML.parse(prn_type_xml)
+                    blast_prn_xml = NCBIXML.parse(prn_xml)
                     mut_type, mutation = prn_assists.snp_mutations(blast_prn_xml, prn_row, prn_type)
                     prn_type = prn_assists.match_known_prn(mut_type, prn_type, mutation, None)
                 else:
@@ -70,7 +70,7 @@ def virulence_analysis(assembly, prn_outdir, closed, datadir, prokka_outdir):
             prn_row, prn_type = prn_assists.prn_type(prn_type_info, "partial") # partial PRN typing
             if closed == True:
                 prn_promoter_xml = NCBIXML.parse(prn_xml)
-                prn_contigs = prn_assists.extract_prn(prn_promoter_xml, prn_promoter, prn_outdir)
+                prn_contigs = prn_assists.extract_prn(assembly, prn_promoter_xml, prn_promoter, prn_outdir, "partial")
             # this command only should be used for short read assembled genomes.
             else:
                 prn_contigs = prn_assists.extract_contigs(assembly, prn_row, prn_outdir) # extracting the contigs matching the prn
@@ -91,16 +91,16 @@ def virulence_analysis(assembly, prn_outdir, closed, datadir, prokka_outdir):
         prn_row, prn_type = prn_assists.prn_type(prn_type_info, "dupe") # duplicate PRN typing
         if closed == True:
             prn_promoter_xml = NCBIXML.parse(prn_xml)
-            prn_assists.extract_prn(prn_promoter_xml, prn_promoter, prn_outdir)
+            prn_contigs = prn_assists.extract_prn(assembly, prn_promoter_xml, prn_promoter, prn_outdir, "dupe")
         else:
             prn_contigs = prn_assists.extract_contigs(assembly, prn_row, prn_outdir) # extracting the contigs matching the prn
-            blast_cmd_5 = f"blastn -task megablast -query {prn_contigs} -subject {is_elements} -outfmt 6 -out {prn_outdir}/blast_prn_is.txt"
-            assists.run_cmd(blast_cmd_5)
-            if os.path.isfile(prn_outdir + "/blast_prn_is.txt") is True and os.stat(prn_outdir + "/blast_prn_is.txt").st_size != 0:
-                is_prn = pd.read_csv(f"{prn_outdir}/blast_prn_is.txt", sep="\t", header=None)
-                prn_type = prn_assists.dupe_type(prn_promoter, prn_row, is_prn, prn_type)
-            else:
-                prn_type = prn_assists.dupe_type(prn_promoter, prn_row, None, prn_type)
+        blast_cmd_5 = f"blastn -task megablast -query {prn_contigs} -subject {is_elements} -outfmt 6 -out {prn_outdir}/blast_prn_is.txt"
+        assists.run_cmd(blast_cmd_5)
+        if os.path.isfile(prn_outdir + "/blast_prn_is.txt") is True and os.stat(prn_outdir + "/blast_prn_is.txt").st_size != 0:
+            is_prn = pd.read_csv(f"{prn_outdir}/blast_prn_is.txt", sep="\t", header=None)
+            prn_type = prn_assists.dupe_type(prn_promoter, prn_row, is_prn, prn_type)
+        else:
+            prn_type = prn_assists.dupe_type(prn_promoter, prn_row, None, prn_type)
 
     name = os.path.basename(os.path.dirname(prokka_outdir))
     prokka_gbk, contig_prokka_map = assists.contig_prokka_tag(assembly, name, prokka_outdir)

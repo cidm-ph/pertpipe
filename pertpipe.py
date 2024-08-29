@@ -110,6 +110,7 @@ def pertpipe(args):
             assists.run_cmd(spades)
         elif spades_result is False and args.meta is True:
             spades = f"spades.py --meta --only-assembler --pe1-1 {args.R1} --pe1-2 {args.R2} -o {maindir}/spades"
+            assists.run_cmd(spades)
         else:
             logging.info("Spades has already finished for this sample. Skipping.")
         assembly = spades_outdir + "/contigs.fasta"

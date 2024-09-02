@@ -10,15 +10,18 @@ def mres_copy_numbers(reads1, reads2, outdir, mutation_list):
         minimap2_cmd = f"minimap2 -ax sr {rrna_seq} {reads1} {reads2} | samtools view -b > {outdir}/23s_aln.bam"
         assists.run_cmd(minimap2_cmd)
         samtools_sort_cmd = f"samtools sort {outdir}/23s_aln.bam > {outdir}/23s_aln.sort.bam"
-        samtools_index_cmd = f"samtools index {outdir}/23s_aln.sort.bam"
+        samtools_filt_q50 = f"samtools view -b -q 60 {outdir}/23s_aln.sort.bam > {outdir}/23s_aln.q60.sort.bam"
+        samtools_index_cmd = f"samtools index {outdir}/23s_aln.q60.sort.bam"
         assists.run_cmd(samtools_sort_cmd)
+        assists.run_cmd(samtools_filt_q50)
         assists.run_cmd(samtools_index_cmd)
     if os.path.exists(f"{outdir}/mres.vcf") is False or os.stat(f"{outdir}/mres.vcf").st_size == 0:
-        bcftools_cmd = f"bcftools mpileup -f {rrna_seq} {outdir}/23s_aln.sort.bam | bcftools call -mv -Ov -o {outdir}/mres.vcf"
+        bcftools_cmd = f"bcftools mpileup -f {rrna_seq} {outdir}/23s_aln.q60.sort.bam | bcftools call -mv -Ov -o {outdir}/mres.vcf"
         assists.run_cmd(bcftools_cmd)
 
-    res_dict = vcf_calc_and_blast_match(f"{outdir}/mres.vcf", mutation_list)
-
+    mres_df, res_dict = vcf_calc_and_blast_match(f"{outdir}/mres.vcf", mutation_list)
+    mres_df.to_csv(f"{outdir}/23s_mres.txt", sep="\t", index=False, header=False) 
+    logging.info(f"Any other mutations detected in the 23S rRNA V domain will be written to {outdir}/23s_mres.txt")
     return res_dict
 
 def vcf_calc_and_blast_match(bcftools_vcf, mutation_list):
@@ -34,29 +37,40 @@ def vcf_calc_and_blast_match(bcftools_vcf, mutation_list):
 
     info_data = vcf_df["INFO"].str.split(";", expand = True)
     mres_df = pd.DataFrame()
-    mres_df['DP4'] = info_data[7].str.lstrip('DP4=')
+    mres_df['DP4'] = info_data.apply(lambda row: next((cell for cell in row if "DP4=" in cell), None), axis=1).str.lstrip('DP4=')
     split_columns = mres_df['DP4'].str.split(',', expand=True)
+    split_columns = split_columns.apply(pd.to_numeric, errors='coerce')
     mres_df['sum_all_four'] = split_columns.sum(axis=1).astype(int)
     mres_df['sum_last_two'] = split_columns.iloc[:, -2:].sum(axis=1).astype(int)
     mres_df['FREQ'] = mres_df['sum_last_two'] / mres_df['sum_all_four']
+
+    # extract only V domain
+    vdomain_start, vdomain_end = 1918, 2444
+    mres_df["REFPOSALT"], mres_df["POS"] = vcf_df["REF"] + vcf_df["POS"].astype(str) + vcf_df["ALT"], vcf_df["POS"]
+    mres_df = mres_df[(mres_df["POS"] >= vdomain_start) & (mres_df["POS"] <= vdomain_end)]
     mres_df["REFPOSALT"] = vcf_df["REF"] + vcf_df["POS"].astype(str) + vcf_df["ALT"]
-    copy_no = mres_df["FREQ"].apply(determine_copy_number)[0]
-    mres_df = mres_df[['REFPOSALT', 'FREQ']]
-    mask = mres_df['REFPOSALT'].isin(mutation_list)
-    mres_df = mres_df[mask]
+    
+    copy_no = mres_df["FREQ"].apply(determine_copy_number)
+    final_df = mres_df[['REFPOSALT', 'FREQ']]
+    mask = final_df['REFPOSALT'].isin(mutation_list)
+    mres_df = mres_df[mask].reset_index()
     positions = ",".join(mutation_list)
+    copy_no = mres_df["FREQ"].apply(determine_copy_number)[0]
     logging.info(f"23s mutation occurs as a {positions}, very likely in {copy_no}")
     result_dict = {
         "Resistance": "Resistant",
         "Mutation": positions,
-        "Copy No": copy_no
+        "Copy No": mres_df["FREQ"].apply(determine_copy_number)[0]
     }
-    return result_dict
+    return final_df, result_dict
 
 def determine_copy_number(freq):
+    perc = '{:.1%}'.format(freq)
     if 0.68 <= freq <= 1:
-        return "3 copies"
+        return f"3 copies (Freq: {perc})"
+    elif 0.316 < freq < 0.68:
+        return f"2 copies (Freq: {perc})"
     elif 0.05 <= freq <= 0.316:
-        return "1 copy"
+        return f"1 copy (Freq: {perc})"
     else:
-        return "2 copies"
+        return f"(Freq: {perc}"

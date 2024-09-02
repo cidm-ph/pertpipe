@@ -162,7 +162,7 @@ def pertpipe(args):
 
     # 23s rRNA for macrolide resistance
     analysis_outdir = maindir + "/analysis"
-    mutation_list, copies = mres_blast.mres_detection(assembly, analysis_outdir, args.meta)
+    mutation_list, copies, detected = mres_blast.mres_detection(assembly, analysis_outdir, args.meta)
     if mutation_list != [] and args.R1 is not None and args.R2 is not None:
         logging.info(f"Determining potential copy number of 23S rRNA resistance mutations")
         res_dict = mres_copy_no.mres_copy_numbers(args.R1, args.R2, analysis_outdir, mutation_list)
@@ -175,8 +175,8 @@ def pertpipe(args):
             "Mutation": positions,
             "Copy No": f"{str(copies)} copies",
         }
-    elif mutation_list == [] and args.meta:
-        logging.info(f"Seems assembly did not contain 23S mutation, lets just map it directly.")
+    elif mutation_list == [] and args.meta and detected is False:
+        logging.info(f"Seems assembly did not contain 23S mutation, lets just map it directly to make sure.")
         res_dict = mres_map.mres_mapping_only(args.R1, args.R2, analysis_outdir)
     else:
         res_dict = {

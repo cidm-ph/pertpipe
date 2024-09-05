@@ -170,10 +170,17 @@ def pertpipe(args):
         logging.info(f"Assembly only mode: Detected mutations, converting to dictionary")
         positions = ",".join(mutation_list)
         logging.info(f"23s mutation occurs as a {positions} in {copies} copies")
-        res_dict = {
-            "Resistance": "Resistant",
-            "Mutation": positions,
-            "Copy No": f"{str(copies)} copies",
+        if "A2037G" in mutation_list:
+            res_dict = {
+                "Resistance": "Resistant",
+                "Mutation": positions,
+                "Copy No": f"{str(copies)} copies",
+            }
+        else: 
+            res_dict = {
+                "Resistance": "Mutations in 23S rRNA detected",
+                "Mutation": positions,
+                "Copy No": f"{str(copies)} copies",
         }
     elif mutation_list == [] and args.meta and detected is False:
         logging.info(f"Seems assembly did not contain 23S mutation, lets just map it directly to make sure.")

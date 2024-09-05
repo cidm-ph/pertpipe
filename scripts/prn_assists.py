@@ -25,6 +25,9 @@ def prn_type(blast_type, length):
                 prn_row = blast_type[blast_type[1] == prn_type] # Or any other desired handling
         else:
             prn_type = blast_type_filter.loc[blast_type_filter[11].idxmax()][1] # get the highest bitscore after that.
+            if int(prn_type.removeprefix('prn_')) > 10:
+                top_prn_under_10 = blast_type_filter[blast_type_filter[1].apply(lambda x: int(x.split('_')[1]) < 10)]
+                prn_type = top_prn_under_10.loc[top_prn_under_10[11].idxmax()][1]
             prn_row = blast_type[blast_type[1] == prn_type] # Or any other desired handling
     elif length == "partial":
         max_value = blast_type[11].max()
@@ -92,8 +95,8 @@ def match_known_prn(mut_type, prn_type, prn_cut_start, prn_cut_end):
     known_prn = {
        # "146-2733/2733" : "prn2::del(-1513,145)", #H646 prn2
         ('del', 'prn2', -276) : "prn2::del(-283, -40)", #J078
-        ('dis', 'prn28', 2746) : "prn2::del(666, 667)", #J473
-        ('full', 'prn24', 3080) :"prn2::Stop-C1273T", # H697
+        ('del', 'prn2', 'T662-') : "prn2::del(666, 667)", #J473
+        ('snp', 'prn2', 'C1272T') :"prn2::Stop-C1273T", # H697
         ('del', 'prn2', '-292, 1340'): "prn2::del(-292, 1340)", # 24-013-0032 & J625 
         ('del', 'prn2', '-292, 145'): "prn2::del(-1513, 145)", # H696
         ('IS481', 'prn2', 1613) : "prn2::IS481(1613)", # most common IS481 insertion & 24-013-0032

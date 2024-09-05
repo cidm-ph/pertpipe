@@ -60,11 +60,11 @@ def virulence_analysis(assembly, prn_outdir, closed, datadir, prokka_outdir):
                 prn_contigs = prn_assists.extract_contigs(assembly, prn_row, prn_outdir) # extracting the contigs matching the prn
             if is_prn1or2 is True:
                 if prn_row.iloc[0][2] != 100.0: # now check if we need to screen for new mutations!
-                    blast_prn_xml = NCBIXML.parse(prn_xml)
+                    blast_prn_xml = NCBIXML.parse(prn_type_xml)
                     mut_type, mutation = prn_assists.snp_mutations(blast_prn_xml, prn_row, prn_type)
                     prn_type = prn_assists.match_known_prn(mut_type, prn_type, mutation, None)
-                else:
-                    prn_type = prn_assists.promoter_scan(prn_promoter, prn_row, prn_type)
+            else:
+                prn_type = prn_assists.promoter_scan(prn_promoter, prn_row, prn_type)
         else:
             logging.info(f"Truncated PRN gene detected")
             prn_row, prn_type = prn_assists.prn_type(prn_type_info, "partial") # partial PRN typing
@@ -102,8 +102,10 @@ def virulence_analysis(assembly, prn_outdir, closed, datadir, prokka_outdir):
         else:
             prn_type = prn_assists.dupe_type(prn_promoter, prn_row, None, prn_type)
 
+        # run R script here.
+
     name = os.path.basename(os.path.dirname(prokka_outdir))
-    prokka_gbk, contig_prokka_map = assists.contig_prokka_tag(assembly, name, prokka_outdir)
+    #prokka_gbk, contig_prokka_map = assists.contig_prokka_tag(assembly, name, prokka_outdir)
     #draw_figure.draw_clinker(prn_type, prn_outdir, prokka_gbk, contig_prokka_map)
 
     # filling the remaining information from MLST/Virulence gene types

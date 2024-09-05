@@ -56,6 +56,7 @@ def mres_detection(assembly, outdir, meta):
                 detected = False
     unique_mutations = list(set(mutation_list))
     logging.info(f"Final mutation list: {unique_mutations}")
+    vdomain_start, vdomain_end = 1918, 2444
     return unique_mutations, mutation_counter, detected
     
 def mres_position(blast_xml, hit_list):

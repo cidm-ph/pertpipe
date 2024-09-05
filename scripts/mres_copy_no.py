@@ -57,11 +57,18 @@ def vcf_calc_and_blast_match(bcftools_vcf, mutation_list):
     positions = ",".join(mutation_list)
     copy_no = mres_df["FREQ"].apply(determine_copy_number)[0]
     logging.info(f"23s mutation occurs as a {positions}, very likely in {copy_no}")
-    result_dict = {
-        "Resistance": "Resistant",
-        "Mutation": positions,
-        "Copy No": mres_df["FREQ"].apply(determine_copy_number)[0]
-    }
+    if "A2037G" in mutation_list:
+        result_dict = {
+            "Resistance": "Resistant",
+            "Mutation": positions,
+            "Copy No": f"{str(copy_no)} copies",
+        }
+    else: 
+        result_dict = {
+            "Resistance": "Mutations in 23S rRNA V domain detected",
+            "Mutation": positions,
+            "Copy No": f"{str(copy_no)} copies",
+        }
     return final_df, result_dict
 
 def determine_copy_number(freq):

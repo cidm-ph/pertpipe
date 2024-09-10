@@ -95,7 +95,7 @@ def pertpipe(args):
         assists.check_mlst(args.datadir)
     
     if is_reads and is_assembly is False:
-        # assembly
+        # spades assembly
         spades_outdir = maindir + "/spades"
         folder_exists = os.path.exists(spades_outdir)
         if not folder_exists:
@@ -116,14 +116,27 @@ def pertpipe(args):
         assembly = spades_outdir + "/contigs.fasta"
         assists.check_files(assembly)
         closed = assists.check_closed_genome(assembly)
-        
-    elif is_reads is False and is_assembly:
+    
+    elif is_assembly:
         assembly = args.fasta
         closed = assists.check_closed_genome(assembly)
     
-    elif is_reads and is_assembly:
-        assembly = args.fasta
-        closed = assists.check_closed_genome(assembly)
+    if is_reads and is_assembly is False and args.meta is True:
+        megahit_outdir = maindir + "/megahit"
+        folder_exists = os.path.exists(megahit_outdir)
+
+        megahit_result = assists.check_megahit_finished(megahit_outdir)
+        if megahit_result is False:
+            megahit = f"megahit -1 {args.R1} -2 {args.R2} -o {megahit_outdir}"
+            assists.run_cmd(megahit)
+        else:
+            logging.info("Megahit has already finished for this sample. Skipping.")
+
+        megahit = megahit_outdir + "/final.contigs.fa"
+        assists.megahit_assembly_graphs(megahit_outdir)
+        
+        assists.check_files(megahit)
+        #closed = assists.check_closed_genome(assembly)
 
     prokka_outdir = maindir + "/prokka"
     folder_exists = os.path.exists(prokka_outdir)
@@ -144,6 +157,7 @@ def pertpipe(args):
         assists.run_cmd(prokka)
     else:
         logging.info("Prokka has already finished for this sample. Skipping.")
+    
 
     prn_outdir = maindir + "/analysis"
     folder_exists = os.path.exists(prn_outdir)
@@ -162,7 +176,10 @@ def pertpipe(args):
 
     # 23s rRNA for macrolide resistance
     analysis_outdir = maindir + "/analysis"
-    mutation_list, copies, detected = mres_blast.mres_detection(assembly, analysis_outdir, args.meta)
+    if args.meta is False:
+        mutation_list, copies, detected = mres_blast.mres_detection(assembly, analysis_outdir, args.meta)
+    else:
+        mutation_list, copies, detected = mres_blast.mres_detection(megahit, analysis_outdir, args.meta)
     if mutation_list != [] and args.R1 is not None and args.R2 is not None:
         logging.info(f"Determining potential copy number of 23S rRNA resistance mutations")
         res_dict = mres_copy_no.mres_copy_numbers(args.R1, args.R2, analysis_outdir, mutation_list)

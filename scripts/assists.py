@@ -211,6 +211,21 @@ def check_closed_genome(fasta, length_threshold=3900000):
         return True
     else:
         return False
+    
+def megahit_assembly_graphs(megahit_outdir):
+    megahit_done = check_megahit_finished(megahit_outdir)
+    if megahit_done is True:
+        int_contigs = megahit_outdir + "/intermediate_contigs"
+        fa_list = [f for f in os.listdir(int_contigs) 
+           if f.endswith(".contigs.fa") 
+           and not f.endswith(".final.contigs.fa") 
+           and os.path.isfile(os.path.join(int_contigs, f))]
+        for fa in fa_list:
+            kmer_size = fa.removeprefix('k').strip('.contigs.fa')
+            megahit_toolkit_cmd = f"megahit_toolkit contig2fastg {kmer_size} {fa} > {int_contigs}/k{kmer_size}.fastg"
+            fastg2gfa_cmd = f"gfatools view {int_contigs}/k{kmer_size}.fastg > {int_contigs}/k{kmer_size}.gfa"
+            run_cmd(megahit_toolkit_cmd)
+            run_cmd(fastg2gfa_cmd)
 
 def contig_prokka_tag(assembly, name, prokka_outdir):
     # Paths to the GBK and FASTA files

@@ -133,7 +133,7 @@ def pertpipe(args):
             logging.info("Megahit has already finished for this sample. Skipping.")
 
         megahit = megahit_outdir + "/final.contigs.fa"
-        assists.megahit_assembly_graphs(megahit_outdir)
+        #assists.megahit_assembly_graphs(megahit_outdir)
         
         assists.check_files(megahit)
         #closed = assists.check_closed_genome(assembly)

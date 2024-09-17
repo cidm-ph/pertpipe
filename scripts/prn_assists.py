@@ -352,7 +352,7 @@ def fhaB_type(fhaB_df, fhab_len):
     if fhab_len == "full":
         fhaB_type = fhaB_df[1][0]
     elif fhab_len == "truncated":
-        fhaB_type == fhaB_df[1][0]
+        fhaB_type == f"~{fhaB_df[1][0]} (Truncated)"
     else:
         fhaB_type == fhab_len
     return fhaB_type

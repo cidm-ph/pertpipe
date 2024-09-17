@@ -347,4 +347,12 @@ def extract_prn(assembly, prn_promoter_xml, prn_promoter, prn_outdir, length):
             output_file.write(str(prn_only) + "\n")
             logging.info(f"Writing extracted {length} length PRN sequence to {prn_file}")
     return prn_outdir + "/prn_only.fasta"
-                    
+
+def fhaB_type(fhaB_df, fhab_len):
+    if fhab_len == "full":
+        fhaB_type = fhaB_df[1][0]
+    elif fhab_len == "truncated":
+        fhaB_type == fhaB_df[1][0]
+    else:
+        fhaB_type == fhab_len
+    return fhaB_type

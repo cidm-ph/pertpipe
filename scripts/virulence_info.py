@@ -8,7 +8,8 @@ from scripts import prn_assists
 #from scripts import draw_figure
 
 prn_seq = os.path.join(os.path.dirname(os.path.dirname(__file__)), "databases/IR_PRN.fasta")
-prn_type_seq = os.path.join(os.path.dirname(os.path.dirname(__file__)), "databases/bpertussis/prn.tfa") # all the types
+prn_type_seq = os.path.join(os.path.dirname(os.path.dirname(__file__)), "databases/bpertussis/prn.tfa") # all the prn types
+fha_type_seq = os.path.join(os.path.dirname(os.path.dirname(__file__)), "databases/fhaB.fasta") # all the fhaB types
 is_elements = os.path.join(os.path.dirname(os.path.dirname(__file__)), "databases/IS_elements.fasta") # IS elements.
 
 def virulence_analysis(assembly, prn_outdir, closed, datadir, prokka_outdir):
@@ -20,11 +21,13 @@ def virulence_analysis(assembly, prn_outdir, closed, datadir, prokka_outdir):
     blast_cmd_2 = f"blastn -task megablast -query {assembly} -subject {prn_seq} -outfmt 5 -out {prn_outdir}/blast_prn.xml"
     blast_cmd_3 = f"blastn -task megablast -query {assembly} -subject {prn_type_seq} -outfmt 6 -min_raw_gapped_score 100 -out {prn_outdir}/blast_prn_type.txt"
     blast_cmd_4 = f"blastn -task megablast -query {assembly} -subject {prn_type_seq} -outfmt 5 -min_raw_gapped_score 100 -out {prn_outdir}/blast_prn_type.xml"
+    blast_cmd_5 = f"blastn -task megablast -query {assembly} -subject {fha_type_seq} -outfmt 6 -min_raw_gapped_score 100 -out {prn_outdir}/blast_fhaB_type.txt"
+    blast_cmd_6 = f"blastn -task megablast -query {assembly} -subject {fha_type_seq} -outfmt 5 -min_raw_gapped_score 100 -out {prn_outdir}/blast_fhaB_type.xml"
     #prn_cut_position, prn = None
     #is_string = "?"
 
     # run the commands
-    for command in [abricate_cmd, blast_cmd, blast_cmd_2, blast_cmd_3, blast_cmd_4]: 
+    for command in [abricate_cmd, blast_cmd, blast_cmd_2, blast_cmd_3, blast_cmd_4, blast_cmd_5, blast_cmd_6]: 
         assists.run_cmd(command)
     if datadir is not None:
         assists.run_cmd(mlst_datadir_cmd)
@@ -32,7 +35,15 @@ def virulence_analysis(assembly, prn_outdir, closed, datadir, prokka_outdir):
         assists.run_cmd(mlst_cmd)
 
     # check the outputs
-    for outfile in [f"{prn_outdir}/vfdb.txt", f"{prn_outdir}/mlst.txt", f"{prn_outdir}/blast_prn.txt"]:
+    for outfile in [
+        f"{prn_outdir}/vfdb.txt", 
+        f"{prn_outdir}/mlst.txt", 
+        f"{prn_outdir}/blast_prn.txt",
+        f"{prn_outdir}/blast_prn.xml",
+        f"{prn_outdir}/blast_prn_type.txt",
+        f"{prn_outdir}/blast_prn_type.xml",
+        f"{prn_outdir}/blast_fhaB_type.txt",
+        f"{prn_outdir}/blast_fhaB_type.xml"]:
         assists.check_files(outfile)
 
     # lets check how many contigs contain prn
@@ -104,7 +115,27 @@ def virulence_analysis(assembly, prn_outdir, closed, datadir, prokka_outdir):
 
         # run R script here.
 
-    name = os.path.basename(os.path.dirname(prokka_outdir))
+    # run fhaB checking now.
+    fhaB_type_info = pd.read_csv(f"{prn_outdir}/blast_fhaB_type.txt", sep="\t", header=None)
+    fhaB_type_xml = open(f"{prn_outdir}/blast_fhaB_type.xml")
+    
+    max_value = fhaB_type_info[11].max()
+    rows_with_max_value = fhaB_type_info[fhaB_type_info[11] == max_value]
+    if len(rows_with_max_value) == 1:
+        max_length = rows_with_max_value[3][0]
+        if max_length > 10700:
+            fhab_len = "full"
+            logging.info(f"Full length fhaB gene detected")
+        elif max_length >= 5000 and max_length <= 10700:
+            fhab_len = "truncated"
+            logging.info(f"Truncated length fhaB gene detected")
+        else:
+            fhab_len = "abnormal"
+        fhaB_type = prn_assists.fhaB_type(rows_with_max_value, fhab_len)
+    else:
+        logging.info(f"Abnormal number {len(rows_with_max_value)} of fhaB genes detected please investigate.")
+
+    #name = os.path.basename(os.path.dirname(prokka_outdir))
     #prokka_gbk, contig_prokka_map = assists.contig_prokka_tag(assembly, name, prokka_outdir)
     #draw_figure.draw_clinker(prn_type, prn_outdir, prokka_gbk, contig_prokka_map)
 
@@ -126,6 +157,7 @@ def virulence_analysis(assembly, prn_outdir, closed, datadir, prokka_outdir):
         "prn": prn_type,
         "fim2": fim2,
         "fim3": fim3,
+        "fhaB": fhaB_type
     }
     return virulence_info
    

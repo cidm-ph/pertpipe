@@ -146,7 +146,7 @@ def virulence_analysis(assembly, prn_outdir, closed, datadir, prokka_outdir):
             logging.info(f"fhaB gene truncated, getting best hit")
             fhab_len = "truncated"
             max_value = fhaB_type_info[11].max()
-            rows_with_max_value = fhaB_type_info[fhaB_type_info[11] == max_value]
+            rows_with_max_value = fhaB_type_info[fhaB_type_info[11] == max_value].reset_index()
             fhaB_type = prn_assists.fhaB_type(rows_with_max_value, fhab_len)
     
     #name = os.path.basename(os.path.dirname(prokka_outdir))

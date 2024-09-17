@@ -134,8 +134,8 @@ def virulence_analysis(assembly, prn_outdir, closed, datadir, prokka_outdir):
         else:
             logging.info(f"Abnormal number {len(rows_with_max_value)} of fhaB genes detected please investigate.")
     if len(fhaB_vfdb) > 1:
-        if fhaB_vfdb["COVERAGE"].str.contains("1-10773/10773").any():
-            fhaB_full_length = fhaB_vfdb[fhaB_vfdb["COVERAGE"].str.contains("1-10773/10773")].reset_index()
+        if any(fhaB_vfdb["COVERAGE"] == "1-10773/10773"):
+            fhaB_full_length = fhaB_vfdb[fhaB_vfdb["COVERAGE"] == "1-10773/10773"].reset_index()
             fhaB_contig_name = fhaB_full_length['SEQUENCE'][0]
             logging.info(f"Full length fhaB gene detected")
             row_with_seq_name = fhaB_type_info[fhaB_type_info[0] == fhaB_contig_name]

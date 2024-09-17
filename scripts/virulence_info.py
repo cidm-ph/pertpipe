@@ -118,23 +118,35 @@ def virulence_analysis(assembly, prn_outdir, closed, datadir, prokka_outdir):
     # run fhaB checking now.
     fhaB_type_info = pd.read_csv(f"{prn_outdir}/blast_fhaB_type.txt", sep="\t", header=None)
     fhaB_type_xml = open(f"{prn_outdir}/blast_fhaB_type.xml")
-    
-    max_value = fhaB_type_info[11].max()
-    rows_with_max_value = fhaB_type_info[fhaB_type_info[11] == max_value]
-    if len(rows_with_max_value) == 1:
-        max_length = rows_with_max_value[3][0]
-        if max_length > 10700:
-            fhab_len = "full"
-            logging.info(f"Full length fhaB gene detected")
-        elif max_length >= 5000 and max_length <= 10700:
-            fhab_len = "truncated"
-            logging.info(f"Truncated length fhaB gene detected")
+    fhaB_vfdb = vfdb_info[vfdb_info['GENE'].str.contains('fhaB')].reset_index()
+    if len(fhaB_vfdb) == 1:
+        max_value = fhaB_type_info[11].max()
+        rows_with_max_value = fhaB_type_info[fhaB_type_info[11] == max_value]
+        coverage = fhaB_vfdb['COVERAGE'][0]
+        if len(rows_with_max_value) == 1 and coverage == '1-10773/10773':
+            max_length = rows_with_max_value[3][0]
+            if max_length > 10700:
+                fhab_len = "full"
+                logging.info(f"Full length fhaB gene detected")
+            else:
+                fhab_len = "abnormal"
+            fhaB_type = prn_assists.fhaB_type(rows_with_max_value, fhab_len)
         else:
-            fhab_len = "abnormal"
-        fhaB_type = prn_assists.fhaB_type(rows_with_max_value, fhab_len)
-    else:
-        logging.info(f"Abnormal number {len(rows_with_max_value)} of fhaB genes detected please investigate.")
-
+            logging.info(f"Abnormal number {len(rows_with_max_value)} of fhaB genes detected please investigate.")
+    if len(fhaB_vfdb) > 1:
+        if fhaB_vfdb["COVERAGE"].str.contains("1-10773/10773").any():
+            fhaB_full_length = fhaB_vfdb[fhaB_vfdb["COVERAGE"].str.contains("1-10773/10773")].reset_index()
+            fhaB_contig_name = fhaB_full_length['SEQUENCE'][0]
+            logging.info(f"Full length fhaB gene detected")
+            row_with_seq_name = fhaB_type_info[fhaB_type_info[0] == fhaB_contig_name]
+            max_value = fhaB_type_info[11].max()
+            rows_with_max_value = row_with_seq_name[row_with_seq_name[11] == max_value]
+            fhaB_type = prn_assists.fhaB_type(rows_with_max_value, fhab_len)
+        else:
+            logging.info(f"fhaB gene truncated, getting best hit")
+            max_value = fhaB_type_info[11].max()
+            rows_with_max_value = row_with_seq_name[row_with_seq_name[11] == max_value]
+            fhaB_type = prn_assists.fhaB_type(rows_with_max_value, fhab_len)
     #name = os.path.basename(os.path.dirname(prokka_outdir))
     #prokka_gbk, contig_prokka_map = assists.contig_prokka_tag(assembly, name, prokka_outdir)
     #draw_figure.draw_clinker(prn_type, prn_outdir, prokka_gbk, contig_prokka_map)

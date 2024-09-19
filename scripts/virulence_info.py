@@ -138,6 +138,7 @@ def virulence_analysis(assembly, prn_outdir, closed, datadir, prokka_outdir):
             fhaB_full_length = fhaB_vfdb[fhaB_vfdb["COVERAGE"] == "1-10773/10773"].reset_index()
             fhaB_contig_name = fhaB_full_length['SEQUENCE'][0]
             logging.info(f"Full length fhaB gene detected")
+            fhab_len = "full"
             row_with_seq_name = fhaB_type_info[fhaB_type_info[0] == fhaB_contig_name]
             max_value = fhaB_type_info[11].max()
             rows_with_max_value = row_with_seq_name[row_with_seq_name[11] == max_value]

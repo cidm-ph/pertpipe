@@ -126,6 +126,10 @@ def pertpipe(args):
         folder_exists = os.path.exists(megahit_outdir)
 
         megahit_result = assists.check_megahit_finished(megahit_outdir)
+        if folder_exists and megahit_result is False:
+            logging.info(f"Removing existing failed megahit folder")
+            os.rmdir(megahit_outdir)
+        
         if megahit_result is False:
             megahit = f"megahit -1 {args.R1} -2 {args.R2} -o {megahit_outdir}"
             assists.run_cmd(megahit)

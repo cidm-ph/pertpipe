@@ -61,8 +61,15 @@ def prn_type(blast_type, length):
         blast_type_filter = blast_type.groupby(1).agg(agg_dict).reset_index()
         max_value = blast_type_filter[11].max()
         top_rows = blast_type_filter[blast_type_filter[11] == max_value]
-        if len(top_rows) < 1:
+        if len(top_rows) <= 1:
             prn_type = blast_type_filter.loc[blast_type_filter[11].idxmax()][1]
+            if int(prn_type.removeprefix('prn_')) < 10:
+                prn_type = prn_type
+            else:
+                top_prn_under_10 = blast_type_filter[blast_type_filter[1].apply(lambda x: int(x.split('_')[1]) < 10)]
+                [blast_type_filter[1].apply(lambda x: int(x.split('_')[1]) < 10)]
+                if not top_prn_under_10.empty:
+                    prn_type = top_prn_under_10.loc[top_prn_under_10[11].idxmax()][1]
         else:
             top_prn_under_10 = top_rows[top_rows[1].apply(lambda x: int(x.split('_')[1]) < 10)]
             if not top_prn_under_10.empty:
@@ -71,7 +78,7 @@ def prn_type(blast_type, length):
     else:
         prn_row = None
         prn_type = None
-        logging.info(f"YOU FUCKED UP AND DIDN'T CATCH THIS EDGE CASE")
+        logging.critical(f"YOU FUCKED UP AND DIDN'T CATCH THIS EDGE CASE")
     return prn_row, prn_type.replace("_", "")
 
 def extract_contigs(assembly_file, prn_row, prn_outdir):

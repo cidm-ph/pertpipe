@@ -25,7 +25,7 @@ def mres_copy_numbers(reads1, reads2, outdir, mutation_list):
     return res_dict
 
 def vcf_calc_and_blast_match(bcftools_vcf, mutation_list):
-    
+    positions = None
     with open(bcftools_vcf, "r") as vcf:
         oneline = ""
         lines = vcf.readlines()
@@ -54,14 +54,24 @@ def vcf_calc_and_blast_match(bcftools_vcf, mutation_list):
     final_df = mres_df[['REFPOSALT', 'FREQ']]
     mask = final_df['REFPOSALT'].isin(mutation_list)
     mres_df = mres_df[mask].reset_index()
-    positions = ",".join(mutation_list)
-    copy_no = mres_df["FREQ"].apply(determine_copy_number)[0]
-    logging.info(f"23s mutation occurs as a {positions}, very likely in {copy_no}")
+    if not mres_df.empty:
+        positions = ",".join(mutation_list)
+        copy_no = mres_df["FREQ"].apply(determine_copy_number)[0]
+        logging.info(f"23s mutation occurs as a {positions}, very likely in {copy_no}")
+    else:
+        logging.info(f"Mutations detected in assembly was not detected in mapping.")
+    
     if "A2037G" in mutation_list:
         result_dict = {
             "Resistance": "Resistant",
             "Mutation": positions,
             "Copy No": f"{str(copy_no)} copies",
+        }
+    elif positions is None:
+        result_dict = {
+            "Resistance": "Susceptible",
+            "Mutation": "N/A",
+            "Copy No": "N/A",
         }
     else: 
         result_dict = {

@@ -60,7 +60,10 @@ def check_folders(folder):
 
 def check_dependencies(cmd_exec):
     cmd_path = shutil.which(cmd_exec)
-    vcmd = subprocess.run([cmd_exec, "--version"], capture_output=True, text=True)
+    if cmd_exec == "kallisto":
+        vcmd = subprocess.run([cmd_exec, "version"], capture_output=True, text=True)
+    else:
+        vcmd = subprocess.run([cmd_exec, "--version"], capture_output=True, text=True)
     if vcmd.returncode == 0 and vcmd.stdout != '':
         result = vcmd.stdout.splitlines()
     else:
@@ -89,7 +92,8 @@ def check_dependencies(cmd_exec):
                 sys.exit(1)
     if cmd_exec == "bcftools":
         version = result[0].replace("bcftools ", "")
-
+    if cmd_exec == "kallisto":
+        version = result[0].replace("kallisto, version ", "v")
     if cmd_path is not None:
         msg = "Located " + cmd_exec + " " + version + " in " + cmd_path
         logging.info(msg)
@@ -175,6 +179,12 @@ def check_prokka_finished(prokka_outdir, name):
     else:
         return False
 
+def check_kallisto_finished(analysis_outdir):
+    kallisto_log = os.path.join(analysis_outdir, "run_info.json")
+    if os.path.isfile(kallisto_log) and os.stat(kallisto_log).st_size != 0:
+        return True
+    else:
+        return False
 
 def get_fasta_length(prn_type):
     length = 0

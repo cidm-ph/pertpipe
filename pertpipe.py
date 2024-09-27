@@ -8,7 +8,6 @@ from scripts import assists
 from scripts import arguments
 from scripts import virulence_info
 from scripts import mres_blast
-from scripts import mres_copy_no
 from scripts import mres_map
 
 __version__ = "0.0.1"
@@ -18,7 +17,7 @@ formatter = logging.Formatter(
     "pertpipe:%(levelname)s:%(asctime)s: %(message)s", datefmt="%y/%m/%d %I:%M:%S %p"
 )
 
-dependency_list = ["abricate", "spades.py", "mlst", "minimap2", "samtools", "bcftools", "prokka"]
+dependency_list = ["abricate", "spades.py", "mlst", "minimap2", "samtools", "bcftools", "prokka", "kallisto"]
 ref_list = []
 
 def pertpipe(args):
@@ -184,28 +183,25 @@ def pertpipe(args):
         mutation_list, copies, detected = mres_blast.mres_detection(assembly, analysis_outdir, args.meta)
     else:
         mutation_list, copies, detected = mres_blast.mres_detection(megahit, analysis_outdir, args.meta)
-    if mutation_list != [] and args.R1 is not None and args.R2 is not None:
-        logging.info(f"Determining potential copy number of 23S rRNA resistance mutations")
-        res_dict = mres_copy_no.mres_copy_numbers(args.R1, args.R2, analysis_outdir, mutation_list)
-    elif mutation_list != [] and is_assembly and closed:
-        logging.info(f"Assembly only mode: Detected mutations, converting to dictionary")
-        positions = ",".join(mutation_list)
-        logging.info(f"23s mutation occurs as a {positions} in {copies} copies")
-        if "A2037G" in mutation_list:
-            res_dict = {
-                "Resistance": "Resistant",
-                "Mutation": positions,
-                "Copy No": f"{str(copies)} copies",
+    if is_reads is True:
+        res_dict = mres_map.mres_map(args.R1, args.R2, analysis_outdir, mutation_list, args.meta)
+    elif is_assembly and closed:
+        logging.info(f"Assembly only mode")
+        if mutation_list != []:
+            positions = ",".join(mutation_list)
+            logging.info(f"23s mutation occurs as a {positions} in {copies} copies")
+            if "A2037G" in mutation_list:
+                res_dict = {
+                    "Resistance": "Resistant",
+                    "Mutation": positions,
+                    "Copy No": f"{str(copies)} copies",
+                }
+            else: 
+                res_dict = {
+                    "Resistance": "Mutations in 23S rRNA detected",
+                    "Mutation": positions,
+                    "Copy No": f"{str(copies)} copies",
             }
-        else: 
-            res_dict = {
-                "Resistance": "Mutations in 23S rRNA detected",
-                "Mutation": positions,
-                "Copy No": f"{str(copies)} copies",
-        }
-    elif mutation_list == [] and args.meta and detected is False:
-        logging.info(f"Seems assembly did not contain 23S mutation, lets just map it directly to make sure.")
-        res_dict = mres_map.mres_mapping_only(args.R1, args.R2, analysis_outdir)
     else:
         res_dict = {
             "Resistance": "Susceptible",

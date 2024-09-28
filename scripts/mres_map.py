@@ -143,18 +143,17 @@ def map_calculations(bcftools_vcf):
                 "Mutation": ",".join(positions),
                 "Copy No": ",".join(copy_no)
             }
-        else:
+        elif positions != []:
             result_dict = {
                 "Resistance": "Mutations in 23S rRNA V domain detected",
                 "Mutation": ", ".join(positions),
                 "Copy No": ", ".join(copy_no)
             }
-
-    else:
-        logging.info(f"No 23S mutations were detected in this sample")
-        result_dict = {
-            "Resistance": "Susceptible",
-            "Mutation": "N/A",
-            "Copy No": "N/A"
-            }
+        else:
+            logging.info(f"No 23S mutations were detected in this sample")
+            result_dict = {
+                "Resistance": "Susceptible",
+                "Mutation": "N/A",
+                "Copy No": "N/A"
+                }
     return result_dict, mres_df

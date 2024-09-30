@@ -156,4 +156,11 @@ def map_calculations(bcftools_vcf):
                 "Mutation": "N/A",
                 "Copy No": "N/A"
                 }
+    else:
+        logging.info(f"No 23S mutations were detected in this sample")
+        result_dict = {
+            "Resistance": "Susceptible",
+            "Mutation": "N/A",
+            "Copy No": "N/A"
+            }
     return result_dict, mres_df

@@ -185,7 +185,7 @@ def pertpipe(args):
         mutation_list, copies, detected = mres_blast.mres_detection(megahit, analysis_outdir, args.meta)
     if is_reads is True:
         res_dict = mres_map.mres_map(args.R1, args.R2, analysis_outdir, mutation_list, args.meta)
-    elif is_assembly and closed:
+    elif is_assembly:
         logging.info(f"Assembly only mode")
         if mutation_list != []:
             positions = ",".join(mutation_list)
@@ -202,6 +202,12 @@ def pertpipe(args):
                     "Mutation": positions,
                     "Copy No": f"{str(copies)} copies",
             }
+        else:
+            res_dict = {
+                "Resistance": "Susceptible",
+                "Mutation": "N/A",
+                "Copy No": "N/A"
+                }
     else:
         res_dict = {
             "Resistance": "Susceptible",

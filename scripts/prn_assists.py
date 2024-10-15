@@ -216,6 +216,9 @@ def dupe_type(prn_promoter, prn_row, is_prn, prn_type):
         if prn_cut_start < prn_cut_end:
             logging.info("Deletion likely, setting to deletion")
             mut_type = "del"
+        elif prn_cut_start > prn_cut_end:
+            logging.info("Disruption detected, could be insertion")
+            mut_type = "dis"
     else:
         logging.info("Deletion likely however the start of deletion was not detected, proceeding to promoter checks")
         mut_type = "promoter"

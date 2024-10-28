@@ -54,6 +54,8 @@ def mres_detection(assembly, outdir, meta):
             else:
                 logging.error(f"Encountered issue, potentially truncated 23S rRNA detected, or error in assembly occurred.")
                 detected = False
+    else:
+        logging.info(f"No 23S rRNA detected through Blast")
     unique_mutations = list(set(mutation_list))
     logging.info(f"Final mutation list: {unique_mutations}")
     vdomain_start, vdomain_end = 1918, 2444

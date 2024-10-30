@@ -79,7 +79,11 @@ def prn_type(blast_type, length):
         prn_row = None
         prn_type = None
         logging.critical(f"YOU FUCKED UP AND DIDN'T CATCH THIS EDGE CASE")
-    return prn_row, prn_type.replace("_", "")
+    if prn_type is None and prn_row.empty:
+        prn_type = None
+    else:
+        prn_type = prn_type.replace("_", "")
+    return prn_row, prn_type
 
 def extract_contigs(assembly_file, prn_row, prn_outdir):
     match_contigs = prn_row[0].to_list()
@@ -209,8 +213,9 @@ def dupe_type(prn_promoter, prn_row, is_prn, prn_type):
             prn_cut_end = row[8]
             logging.info(f"prn_cut_end: {prn_cut_end}")
     else:
-        prn_cut_end = assists.get_fasta_length(prn_type.replace("prn", "prn_"))
-        mut_type = "dis"
+        if prn_type is not None:
+            prn_cut_end = assists.get_fasta_length(prn_type.replace("prn", "prn_"))
+            mut_type = "dis"
     
     if prn_cut_start != None:
         if prn_cut_start < prn_cut_end:
@@ -220,10 +225,11 @@ def dupe_type(prn_promoter, prn_row, is_prn, prn_type):
             logging.info("Disruption detected, could be insertion")
             mut_type = "dis"
     else:
-        logging.info("Deletion likely however the start of deletion was not detected, proceeding to promoter checks")
-        mut_type = "promoter"
-        prn_type = promoter_scan(prn_promoter, prn_row, prn_type)
-
+        if prn_type is not None and prn_row.empty is False:
+            logging.info("Deletion likely however the start of deletion was not detected, proceeding to promoter checks")
+            mut_type = "promoter"
+            prn_type = promoter_scan(prn_promoter, prn_row, prn_type)
+            
     if is_prn is not None:
         is_string = None
         pident_gr_90 = is_prn[2] > 90
@@ -276,8 +282,9 @@ def dupe_type(prn_promoter, prn_row, is_prn, prn_type):
                     irl_ins_pos = None
             else:
                 logging.info(f"Nothing")
-    if "::" not in prn_type:
-        prn_type = match_known_prn(mut_type, prn_type, prn_cut_start, prn_cut_end)
+    if prn_type is not None:
+        if "::" not in prn_type:
+            prn_type = match_known_prn(mut_type, prn_type, prn_cut_start, prn_cut_end)
     return prn_type
     
 def promoter_scan(prn_promoter, prn_row, prn_type):

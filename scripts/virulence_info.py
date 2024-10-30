@@ -132,11 +132,10 @@ def virulence_analysis(assembly, prn_outdir, closed, datadir, prokka_outdir):
                 prn_type = prn_assists.dupe_type(prn_promoter, prn_row, is_prn, prn_type)
             else:
                 prn_type = prn_assists.dupe_type(prn_promoter, prn_row, None, prn_type)
-
-            # run R script here.
     else: 
         prn_row = prn_type = "Not Detected"
-
+    if prn_row is None or prn_type is None:
+        prn_row = prn_type = "Not Detected"
     # run fhaB checking now.
     try:
         fhaB_type_info = pd.read_csv(f"{prn_outdir}/blast_fhaB_type.txt", sep="\t", header=None)
@@ -164,6 +163,7 @@ def virulence_analysis(assembly, prn_outdir, closed, datadir, prokka_outdir):
                 fhaB_type = prn_assists.fhaB_type(rows_with_max_value, fhab_len)
             else:
                 logging.info(f"Abnormal number {len(rows_with_max_value)} of fhaB genes detected please investigate.")
+                fhaB_type = "Abnormal"
         if len(fhaB_vfdb) > 1:
             if any(fhaB_vfdb["COVERAGE"] == "1-10773/10773"):
                 fhaB_full_length = fhaB_vfdb[fhaB_vfdb["COVERAGE"] == "1-10773/10773"].reset_index()

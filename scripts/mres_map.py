@@ -86,6 +86,7 @@ def vcf_calc_and_blast_match(bcftools_vcf, mutation_list, coverage):
             logging.info(f"23s mutation occurs as a {positions}, very likely in {copy_no}")
     else:
         final_df = pd.DataFrame()
+        positions = None
         logging.info(f"Mutations detected in assembly was not detected in mapping.")
     
     if coverage < 10:

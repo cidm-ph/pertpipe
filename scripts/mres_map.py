@@ -63,6 +63,7 @@ def vcf_calc_and_blast_match(bcftools_vcf, mutation_list, coverage):
     info_data = vcf_df["INFO"].str.split(";", expand = True)
     if not info_data.empty:
         mres_df = pd.DataFrame()
+        copy_no = 0
         mres_df['DP4'] = info_data.apply(lambda row: next((cell for cell in row if "DP4=" in cell), None), axis=1).str.lstrip('DP4=')
         split_columns = mres_df['DP4'].str.split(',', expand=True)
         split_columns = split_columns.apply(pd.to_numeric, errors='coerce')
@@ -87,13 +88,20 @@ def vcf_calc_and_blast_match(bcftools_vcf, mutation_list, coverage):
     else:
         final_df = pd.DataFrame()
         positions = None
+        copy_no = 0
         logging.info(f"Mutations detected in assembly was not detected in mapping.")
     
-    if coverage < 10:
+    if coverage < 10 and positions is not None:
         result_dict = {
             "Resistance": "Low Coverage!",
             "Mutation": positions,
             "Copy No": f"{str(copy_no)} copies",
+        }
+    elif coverage < 10 and positions is None:
+        result_dict = {
+            "Resistance": "Low Coverage!",
+            "Mutation": "N/A",
+            "Copy No": "N/A",
         }
     elif "A2037G" in mutation_list:
         result_dict = {

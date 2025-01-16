@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "pertpipe"
+version = "0.1.0"
+description = "Pipeline for full analysis of Bordetella pertussis, particularly for the detection of macrolide resistance & vaccine antigen mutations "
+authors = ["Winkie Fong <Winkie.Fong@health.nsw.gov.au>"]
+license = "GPL-3.0-only"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10.2"
+pandas = "^2.2.2"
+numpy = "^1.26.4"
+biopython = "^1.83"
+Bio = "^1.7.1"
+setuptools = "^70.0.0
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

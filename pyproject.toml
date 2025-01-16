@@ -12,7 +12,7 @@ pandas = "^2.2.2"
 numpy = "^1.26.4"
 biopython = "^1.83"
 Bio = "^1.7.1"
-setuptools = "^70.0.0
+setuptools = "^70.0.0"
 
 [build-system]
 requires = ["poetry-core"]

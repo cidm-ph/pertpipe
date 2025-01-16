@@ -76,7 +76,7 @@ def virulence_analysis(assembly, prn_outdir, closed, datadir, prokka_outdir):
 
     # this is the 1 PRN gene checking & pathway
     if not any(file is None for file in file_vars):
-        if len(prn_vfdb) == 1:
+        if len(prn_vfdb) == 1 or prn_vfdb['COVERAGE'].any() == '1-2733/2733': # sometimes two prn genes can come up even if there is a full length gene.
             logging.info(f"1 PRN gene detected")
             coverage = prn_vfdb['COVERAGE'][0]
             if coverage == '1-2733/2733': # check if coverage is 100.0 so that we know its full length

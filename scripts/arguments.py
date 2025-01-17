@@ -1,6 +1,6 @@
 import argparse
 
-__version__ = "0.0.1"
+__version__ = "1.0.0"
 
 def create_parser():
     parser = argparse.ArgumentParser(description="pertpipe", prog="pertpipe")

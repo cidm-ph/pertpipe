@@ -4,7 +4,7 @@ __pycache__
 launch.json
 settings.json
 .pylintrc
-SILVA_138.2_LSURef_NR99
+SILVA_138.2_LSURef_NR99*
 
 # abricate indexes
 *.ndb

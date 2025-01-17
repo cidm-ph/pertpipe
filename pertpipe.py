@@ -3,7 +3,7 @@ import logging
 import os
 import sys
 import warnings
-import glob
+import shutil
 from scripts import assists
 from scripts import arguments
 from scripts import virulence_info
@@ -127,7 +127,7 @@ def pertpipe(args):
         megahit_result = assists.check_megahit_finished(megahit_outdir)
         if folder_exists and megahit_result is False:
             logging.info(f"Removing existing failed megahit folder")
-            os.rmdir(megahit_outdir)
+            shutil.rmtree(megahit_outdir, ignore_errors=True)
         
         if megahit_result is False:
             megahit = f"megahit -1 {args.R1} -2 {args.R2} -o {megahit_outdir}"

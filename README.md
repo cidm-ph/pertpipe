@@ -16,9 +16,9 @@ GITHUB
 ```
 git clone https://github.com/cidm-ph/pertpipe.git
 ```
-Then you can use setup.py
+Then you can use setup.py with or without datadir. Only use datadir if you intend on having all your databases in a location OTHER than default.
 ```
-python setup.py
+python setup.py $DATADIR
 ```
 
 ## Usage
@@ -63,6 +63,7 @@ FLAGS
 
 ## Limitations
 - If using Metagenomics, it is important to remember that the 23S rRNA is quite a conservative region across many species, therefore commensals can play a part in creating "noise" and as a result, induce false SNP mutations in this region. The pipeline will do its best to remove as much of this noise as possible but it cannot guarantee that SNPs detected in the 23S rRNA confer resistance to macrolides (except A2037G).
+- Known Issues: Pipeline has issues with NCBI closed genomes, as the MLST scheme that it uses is custom and the MLST software seems to have issues with NCBI closed genomes + custom databases.
 
 ## Dependencies
 - SPades

@@ -200,7 +200,7 @@ def pertpipe(args):
                 res_dict = {
                     "Resistance": "Mutations in 23S rRNA detected",
                     "Mutation": positions,
-                    "Copy No": f"{str(copies)} copies",
+                    "Copy No": f"{str(copies)}",
             }
         else:
             res_dict = {
